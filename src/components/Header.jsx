@@ -77,7 +77,7 @@ export default function Header({
 
           {/* GitHub link */}
           <a
-            href="https://github.com/Aditya090908/covid19-tracker"
+            href="https://github.com/Aditya090908/pulse-19"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-2 px-3 py-2.5 rounded-xl border border-cyan-500/20 bg-slate-900/60 hover:bg-cyan-950/40 hover:border-cyan-400/50 text-xs font-mono text-cyan-300 transition-all shadow-sm"

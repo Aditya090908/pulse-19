@@ -242,7 +242,7 @@ export default function App() {
           </p>
           <div className="flex items-center gap-4 text-[11px]">
             <a
-              href="https://github.com/Aditya090908/covid19-tracker"
+              href="https://github.com/Aditya090908/pulse-19"
               target="_blank"
               rel="noopener noreferrer"
               className="text-slate-400 hover:text-cyan-400 transition-colors"

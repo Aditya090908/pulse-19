@@ -55,7 +55,7 @@ An advanced real-time epidemiological telemetry and bio-surveillance command cen
 ## 📁 Source Code Organization
 
 ```
-D:\covid-tracker/
+D:\pulse-19/
 ├── src/
 │   ├── components/
 │   │   ├── Header.jsx           # Command center navigation & telemetry indicators
@@ -88,8 +88,8 @@ D:\covid-tracker/
 
 1. **Clone repository:**
    ```bash
-   git clone https://github.com/Aditya090908/covid19-tracker.git
-   cd covid19-tracker
+   git clone https://github.com/Aditya090908/pulse-19.git
+   cd pulse-19
    ```
 
 2. **Install dependencies:**
