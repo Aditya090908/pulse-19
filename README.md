@@ -3,29 +3,32 @@
 [![React](https://img.shields.io/badge/React-18.3-06B6D4?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-6.2-646CFF?logo=vite)](https://vitejs.dev/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
-[![Leaflet](https://img.shields.io/badge/Leaflet-1.9-00F0FF?logo=leaflet)](https://leafletjs.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-00FFaa.svg)](LICENSE)
 
-An advanced real-time epidemiological telemetry and bio-surveillance command center. Designed with a custom **Obsidian & Electric Cyan** aesthetic, featuring dynamic radar geospatial mapping, multi-curve trajectory visualizers, and algorithmic severity ratios.
+An advanced real-time epidemiological telemetry and bio-surveillance command center. Designed with a custom **Obsidian & Electric Cyan** aesthetic, featuring multi-curve trajectory visualizers, regional diagnostics telemetry, and algorithmic severity ratios.
 
 ---
 
 ## ⚡ Bespoke Design & Capabilities
 
-- **🌐 Geospatial Epidemiology Radar**:
-  - High-contrast **CartoDB Dark Matter** tiles with custom radar ripple beacons.
-  - Dual-layer concentric circles: an inner core showing magnitude and an outer pulsed radar perimeter.
-  - Dynamic fly-to viewport transitions and custom telemetry HUD tooltips with local recovery metrics.
-
 - **📡 Bio-Intelligence Telemetry Bar**:
   - Live algorithmic ratio computations across 230+ monitored territories.
   - Real-time **Global Recovery Ratio %**, **Case Fatality Rate (CFR %)**, and **ICU Severity Index** with glowing neon progress gauges.
+
+- **📊 Command Cockpit Metrics**:
+  - Monospace telemetry tags (`[01] Confirmed Influx`, `[02] Active Load`, `[03] Full Recoveries`, `[04] Fatalities`).
+  - Active metric selection with glowing cyan, amber, emerald, and coral illumination states.
+  - Monospace 24h influx delta badges.
 
 - **📈 Multi-Curve Trajectory Visualizer**:
   - High-performance SVG sparklines with custom glowing filters (`feDropShadow`).
   - **Dual Compare Mode**: Overlay confirmed cases against recoveries simultaneously on the same timeline.
   - Interactive crosshair scrubber with instant timestamp and volume inspection.
   - One-click toggling between **Cumulative** trajectory and **Daily Influx** delta.
+
+- **🔬 Regional Deep Diagnostics**:
+  - Detailed diagnostic panel reporting Critical ICU load, Tests Conducted, Infection Density per 1M, and Mortality per 1M.
+  - Real-time population telemetry and per-capita testing ratios.
 
 - **📋 Territory Surveillance Matrix**:
   - Searchable node rankings with country flag telemetry.
@@ -44,7 +47,6 @@ An advanced real-time epidemiological telemetry and bio-surveillance command cen
 | **Frontend Framework** | React 18 (Functional Components, Custom Hooks) |
 | **Bundler & Tooling** | Vite 6 (Lightning-fast HMR and ESM build pipeline) |
 | **Theme & UI System** | Custom Tailwind CSS Cyber-Obsidian / Neon-Cyan System |
-| **Geospatial Engine** | Leaflet + CartoDB Dark Matter with Custom SVG Radar Layers |
 | **Data Visualization** | Responsive SVG Line Engines with SVG Glow Filter primitives |
 | **Iconography** | Lucide React |
 
@@ -59,7 +61,6 @@ D:\covid-tracker/
 │   │   ├── Header.jsx           # Command center navigation & telemetry indicators
 │   │   ├── GlobalStatusBar.jsx  # Recovery, Lethality & ICU telemetry gauges
 │   │   ├── MetricCard.jsx       # Micro-meter telemetry metric cards
-│   │   ├── InteractiveMap.jsx   # Geospatial radar map with concentric beacons
 │   │   ├── TrendChart.jsx       # Glowing SVG multi-curve trajectory engine
 │   │   └── CountryTable.jsx     # Node surveillance matrix with quick filters
 │   ├── services/

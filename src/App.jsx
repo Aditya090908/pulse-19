@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import GlobalStatusBar from './components/GlobalStatusBar';
 import MetricCard from './components/MetricCard';
-import InteractiveMap from './components/InteractiveMap';
 import CountryTable from './components/CountryTable';
 import TrendChart from './components/TrendChart';
 import {
@@ -11,7 +10,7 @@ import {
   fetchCountryStats,
   fetchHistoricalData,
 } from './services/api';
-import { Activity, ShieldCheck, Skull, HeartPulse, Radar, Terminal, Compass } from 'lucide-react';
+import { Activity, ShieldCheck, Skull, HeartPulse, Terminal, BarChart2 } from 'lucide-react';
 import { formatCompactNumber, formatFullNumber } from './utils/formatters';
 
 export default function App() {
@@ -21,8 +20,6 @@ export default function App() {
   const [globalStats, setGlobalStats] = useState(null);
   const [countries, setCountries] = useState([]);
   const [historicalData, setHistoricalData] = useState(null);
-  const [mapCenter, setMapCenter] = useState([25, 10]);
-  const [mapZoom, setMapZoom] = useState(2);
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(true);
 
@@ -65,8 +62,6 @@ export default function App() {
         ]);
         setCurrentStats(globalRes.data);
         setHistoricalData(historyRes.data);
-        setMapCenter([25, 10]);
-        setMapZoom(2);
       } else {
         const [countryRes, historyRes] = await Promise.all([
           fetchCountryStats(countryCode),
@@ -75,11 +70,6 @@ export default function App() {
         const countryData = countryRes.data;
         setCurrentStats(countryData);
         setHistoricalData(historyRes.data);
-
-        if (countryData.countryInfo && countryData.countryInfo.lat && countryData.countryInfo.long) {
-          setMapCenter([countryData.countryInfo.lat, countryData.countryInfo.long]);
-          setMapZoom(4);
-        }
       }
     } catch (err) {
       console.error('Failed to change country:', err);
@@ -157,53 +147,22 @@ export default function App() {
 
         {/* Two-Column Cockpit Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Visualizers: Map + Curve */}
+          {/* Main Visualizer: Expanded Trajectory Curve + Regional Diagnostics */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Interactive World Map */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Compass className="h-4 w-4 text-cyan-400" />
-                  <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white">
-                    GEOSPATIAL EPIDEMIOLOGY RADAR
-                  </h2>
-                </div>
-                <span className="text-[11px] font-mono text-cyan-500/80">
-                  CLICK NODE TO EXPAND TELEMETRY
-                </span>
-              </div>
-              <InteractiveMap
-                countries={countries}
-                selectedMetric={selectedMetric}
-                center={mapCenter}
-                zoom={mapZoom}
-                onCountrySelect={handleSelectCountry}
-              />
-            </div>
-
             {/* Historical Trend Chart */}
             <TrendChart
               historicalData={historicalData}
               countryName={activeCountryName}
               activeMetric={selectedMetric}
             />
-          </div>
-
-          {/* Right Column: Country Rankings Table & Diagnostics Card */}
-          <div className="space-y-6">
-            <CountryTable
-              countries={countries}
-              selectedCountry={selectedCountry}
-              onSelectCountry={handleSelectCountry}
-            />
 
             {/* Regional Deep Diagnostics Card */}
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-5 shadow-2xl space-y-3 font-mono">
-              <div className="flex items-center justify-between text-cyan-400 pb-2 border-b border-cyan-500/20">
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-6 shadow-2xl space-y-4 font-mono">
+              <div className="flex items-center justify-between text-cyan-400 pb-3 border-b border-cyan-500/20">
                 <div className="flex items-center gap-2">
                   <Terminal className="h-4 w-4" />
                   <h4 className="text-xs font-bold uppercase tracking-wider">
-                    LOCAL DIAGNOSTICS
+                    REGIONAL TELEMETRY & DIAGNOSTICS
                   </h4>
                 </div>
                 <span className="text-[10px] bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 px-2 py-0.5 rounded">
@@ -211,40 +170,57 @@ export default function App() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5 text-xs">
-                <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80">
                   <p className="text-[10px] text-slate-500 uppercase">Critical ICU</p>
-                  <p className="font-bold text-amber-400 mt-0.5">
+                  <p className="font-bold text-amber-400 text-sm mt-1">
                     {formatFullNumber(currentStats?.critical || 0)}
                   </p>
                 </div>
-                <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80">
-                  <p className="text-[10px] text-slate-500 uppercase">Diagnostics Performed</p>
-                  <p className="font-bold text-cyan-300 mt-0.5">
+                <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80">
+                  <p className="text-[10px] text-slate-500 uppercase">Tests Conducted</p>
+                  <p className="font-bold text-cyan-300 text-sm mt-1">
                     {formatCompactNumber(currentStats?.tests || 0)}
                   </p>
                 </div>
-                <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80">
+                <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80">
                   <p className="text-[10px] text-slate-500 uppercase">Density / 1M</p>
-                  <p className="font-bold text-slate-200 mt-0.5">
+                  <p className="font-bold text-slate-200 text-sm mt-1">
                     {formatFullNumber(currentStats?.casesPerOneMillion || 0)}
                   </p>
                 </div>
-                <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80">
+                <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80">
                   <p className="text-[10px] text-slate-500 uppercase">Mortality / 1M</p>
-                  <p className="font-bold text-rose-400 mt-0.5">
+                  <p className="font-bold text-rose-400 text-sm mt-1">
                     {formatFullNumber(currentStats?.deathsPerOneMillion || 0)}
                   </p>
                 </div>
               </div>
 
-              <div className="pt-1 text-[10px] text-slate-500 flex items-center justify-between">
-                <span>POPULATION:</span>
-                <span className="font-bold text-slate-300">
-                  {formatCompactNumber(currentStats?.population || 0)}
-                </span>
+              <div className="pt-2 text-xs text-slate-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-slate-800/60">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">POPULATION:</span>
+                  <span className="font-bold text-slate-200">
+                    {formatFullNumber(currentStats?.population || 0)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">TESTS / 1M:</span>
+                  <span className="font-bold text-cyan-400">
+                    {formatFullNumber(currentStats?.testsPerOneMillion || 0)}
+                  </span>
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Right Column: Country Rankings Table */}
+          <div className="space-y-6">
+            <CountryTable
+              countries={countries}
+              selectedCountry={selectedCountry}
+              onSelectCountry={handleSelectCountry}
+            />
           </div>
         </div>
       </main>
