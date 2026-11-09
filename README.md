@@ -1,75 +1,91 @@
-# 🦠 COVID-19 & Pandemic Analytics Tracker
+# 🛰️ PULSE19 — Global Epidemiological Bio-Observatory
 
-[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite)](https://vitejs.dev/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
-[![Leaflet](https://img.shields.io/badge/Leaflet-1.9-199900?logo=leaflet)](https://leafletjs.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![React](https://img.shields.io/badge/React-18.3-06B6D4?logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6.2-646CFF?logo=vite)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
+[![Leaflet](https://img.shields.io/badge/Leaflet-1.9-00F0FF?logo=leaflet)](https://leafletjs.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-00FFaa.svg)](LICENSE)
 
-A real-time, interactive global epidemiological analytics dashboard tracking outbreaks, recoveries, and mortality trends worldwide. Built with **React 18**, **Vite**, **Tailwind CSS**, and **Leaflet** with CartoDB Dark Matter styling.
-
----
-
-## 🌟 Key Features
-
-- **🌐 Real-Time Global Outbreak Map**: Interactive geospatial map with dynamic circle markers proportional to severity, fly-to-country zooming, and detailed country popups.
-- **📊 Metric Cards with Live Trends**: Filterable cards for Total Cases, Active ICU Cases, Recoveries, and Mortality with daily 24h delta tracking.
-- **📈 Interactive Time-Series Charts**: Custom responsive SVG sparklines displaying historical trajectory curves with Cumulative vs. Daily New toggle views and hover inspection.
-- **📋 Live Country Rankings Table**: Real-time sortable and searchable country rankings with instant filtering and flag icons.
-- **⚡ Resilient Architecture**: Connects to live public REST APIs (`disease.sh`) with intelligent client-side caching and fallback mock datasets to guarantee 100% uptime.
-- **🎨 Modern Dark Mode Design**: Designed from scratch with clean typography, smooth transitions, and glassmorphism accents.
+An advanced real-time epidemiological telemetry and bio-surveillance command center. Designed with a custom **Obsidian & Electric Cyan** aesthetic, featuring dynamic radar geospatial mapping, multi-curve trajectory visualizers, and algorithmic severity ratios.
 
 ---
 
-## 🛠️ Tech Stack
+## ⚡ Bespoke Design & Capabilities
 
-| Technology | Purpose |
+- **🌐 Geospatial Epidemiology Radar**:
+  - High-contrast **CartoDB Dark Matter** tiles with custom radar ripple beacons.
+  - Dual-layer concentric circles: an inner core showing magnitude and an outer pulsed radar perimeter.
+  - Dynamic fly-to viewport transitions and custom telemetry HUD tooltips with local recovery metrics.
+
+- **📡 Bio-Intelligence Telemetry Bar**:
+  - Live algorithmic ratio computations across 230+ monitored territories.
+  - Real-time **Global Recovery Ratio %**, **Case Fatality Rate (CFR %)**, and **ICU Severity Index** with glowing neon progress gauges.
+
+- **📈 Multi-Curve Trajectory Visualizer**:
+  - High-performance SVG sparklines with custom glowing filters (`feDropShadow`).
+  - **Dual Compare Mode**: Overlay confirmed cases against recoveries simultaneously on the same timeline.
+  - Interactive crosshair scrubber with instant timestamp and volume inspection.
+  - One-click toggling between **Cumulative** trajectory and **Daily Influx** delta.
+
+- **📋 Territory Surveillance Matrix**:
+  - Searchable node rankings with country flag telemetry.
+  - One-click filters: `TOP 10 Nodes`, `>95% Recovery Rate`, and custom multi-metric sorting (`CASES`, `+24H`, `REC`, `DEATHS`).
+  - Integrated micro-progress bars on every country row.
+
+- **🛡️ 100% Resilient Architecture**:
+  - Live data ingestion from REST APIs with zero-latency failover to embedded telemetry datasets for uninterrupted offline performance.
+
+---
+
+## 🛠️ Architecture & Tech Stack
+
+| Layer | Technology |
 |---|---|
-| **React 18** | Functional components, hooks, reactive state management |
-| **Vite** | Next-generation frontend build tooling |
-| **Tailwind CSS** | Utility-first responsive styling and dark mode |
-| **Leaflet** | Interactive geospatial mapping and custom circle layers |
-| **Lucide React** | Modern, lightweight icon suite |
+| **Frontend Framework** | React 18 (Functional Components, Custom Hooks) |
+| **Bundler & Tooling** | Vite 6 (Lightning-fast HMR and ESM build pipeline) |
+| **Theme & UI System** | Custom Tailwind CSS Cyber-Obsidian / Neon-Cyan System |
+| **Geospatial Engine** | Leaflet + CartoDB Dark Matter with Custom SVG Radar Layers |
+| **Data Visualization** | Responsive SVG Line Engines with SVG Glow Filter primitives |
+| **Iconography** | Lucide React |
 
 ---
 
-## 📁 Project Structure
+## 📁 Source Code Organization
 
 ```
-covid-tracker/
-├── public/                 # Static assets
+D:\covid-tracker/
 ├── src/
-│   ├── components/         # Modular UI components
-│   │   ├── Header.jsx          # Top navigation, live pulse, and search selector
-│   │   ├── MetricCard.jsx      # Interactive metric cards
-│   │   ├── InteractiveMap.jsx  # Leaflet map with CartoDB tiles
-│   │   ├── TrendChart.jsx      # Custom SVG historical trend visualizer
-│   │   └── CountryTable.jsx    # Searchable & sortable country rankings
-│   ├── services/           # Data layer
-│   │   ├── api.js              # Fetch requests with timeout & fallbacks
-│   │   └── mockData.js         # Offline resilient dataset
-│   ├── utils/              # Formatting utilities
-│   │   └── formatters.js       # Number and date formatters
-│   ├── App.jsx             # Main dashboard container
-│   ├── index.css           # Tailwind & Leaflet custom styling
-│   └── main.jsx            # Application entry point
-├── index.html              # HTML shell & font preloads
-├── package.json            # Project manifest & dependencies
-├── tailwind.config.js      # Design tokens
-└── vite.config.js          # Vite build config
+│   ├── components/
+│   │   ├── Header.jsx           # Command center navigation & telemetry indicators
+│   │   ├── GlobalStatusBar.jsx  # Recovery, Lethality & ICU telemetry gauges
+│   │   ├── MetricCard.jsx       # Micro-meter telemetry metric cards
+│   │   ├── InteractiveMap.jsx   # Geospatial radar map with concentric beacons
+│   │   ├── TrendChart.jsx       # Glowing SVG multi-curve trajectory engine
+│   │   └── CountryTable.jsx     # Node surveillance matrix with quick filters
+│   ├── services/
+│   │   ├── api.js               # Resilient REST client with auto-failover
+│   │   └── mockData.js          # High-fidelity offline telemetry dataset
+│   ├── utils/
+│   │   └── formatters.js        # Precision number and date formatters
+│   ├── App.jsx                  # Main command center shell
+│   ├── index.css                # Cyber-grid background & neon glow utility rules
+│   └── main.jsx                 # React root bootstrap
+├── index.html                   # HTML entry with font preloads
+├── package.json                 # Dependency manifest
+├── tailwind.config.js           # Design tokens & color system
+└── vite.config.js               # Build & dev server configuration
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Local Development Setup
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v18.0 or higher recommended)
-- `npm` or `pnpm`
+- Node.js (v18+) & `npm`
 
-### Installation
+### Instructions
 
-1. **Clone the repository:**
+1. **Clone repository:**
    ```bash
    git clone https://github.com/Aditya090908/covid19-tracker.git
    cd covid19-tracker
@@ -80,12 +96,13 @@ covid-tracker/
    npm install
    ```
 
-3. **Start the development server:**
+3. **Start local observatory server:**
    ```bash
    npm run dev
    ```
+   Open `http://localhost:3000` in your browser.
 
-4. **Build for production:**
+4. **Compile optimized production build:**
    ```bash
    npm run build
    ```
@@ -100,4 +117,4 @@ covid-tracker/
 
 ## 📄 License
 
-This project is open-source and licensed under the [MIT License](LICENSE) — free to use and customize.
+Open-source and released under the [MIT License](LICENSE) — engineered by Aditya090908.

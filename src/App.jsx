@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
+import GlobalStatusBar from './components/GlobalStatusBar';
 import MetricCard from './components/MetricCard';
 import InteractiveMap from './components/InteractiveMap';
 import CountryTable from './components/CountryTable';
@@ -10,13 +11,14 @@ import {
   fetchCountryStats,
   fetchHistoricalData,
 } from './services/api';
-import { Activity, ShieldCheck, Skull, HeartPulse, Info, Globe, AlertTriangle } from 'lucide-react';
+import { Activity, ShieldCheck, Skull, HeartPulse, Radar, Terminal, Compass } from 'lucide-react';
 import { formatCompactNumber, formatFullNumber } from './utils/formatters';
 
 export default function App() {
   const [selectedCountry, setSelectedCountry] = useState('worldwide');
   const [selectedMetric, setSelectedMetric] = useState('cases'); // 'cases' | 'active' | 'recovered' | 'deaths'
   const [currentStats, setCurrentStats] = useState(null);
+  const [globalStats, setGlobalStats] = useState(null);
   const [countries, setCountries] = useState([]);
   const [historicalData, setHistoricalData] = useState(null);
   const [mapCenter, setMapCenter] = useState([25, 10]);
@@ -34,6 +36,7 @@ export default function App() {
         fetchHistoricalData('all', 60),
       ]);
 
+      setGlobalStats(globalRes.data);
       setCurrentStats(globalRes.data);
       setCountries(countriesRes.data);
       setHistoricalData(historyRes.data);
@@ -87,12 +90,12 @@ export default function App() {
 
   const activeCountryName =
     selectedCountry === 'worldwide'
-      ? 'Worldwide'
+      ? 'Worldwide Telemetry'
       : currentStats?.country || selectedCountry;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Top Navigation */}
+    <div className="min-h-screen bg-[#050811] text-slate-100 flex flex-col bg-tech-grid font-sans selection:bg-cyan-500 selection:text-slate-950">
+      {/* Top Command Center Navigation */}
       <Header
         selectedCountry={selectedCountry}
         onSelectCountry={handleSelectCountry}
@@ -105,10 +108,14 @@ export default function App() {
 
       {/* Main Content Dashboard */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Global Telemetry Status Bar */}
+        <GlobalStatusBar stats={globalStats} />
+
         {/* Metric Cards Row */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
-            title="Coronavirus Cases"
+            code="01"
+            title="Confirmed Influx"
             total={currentStats?.cases}
             today={currentStats?.todayCases}
             type="cases"
@@ -117,7 +124,8 @@ export default function App() {
             onClick={() => setSelectedMetric('cases')}
           />
           <MetricCard
-            title="Active Cases"
+            code="02"
+            title="Active Load"
             total={currentStats?.active}
             today={currentStats?.critical}
             type="active"
@@ -126,7 +134,8 @@ export default function App() {
             onClick={() => setSelectedMetric('active')}
           />
           <MetricCard
-            title="Recovered Patients"
+            code="03"
+            title="Full Recoveries"
             total={currentStats?.recovered}
             today={currentStats?.todayRecovered}
             type="recovered"
@@ -135,7 +144,8 @@ export default function App() {
             onClick={() => setSelectedMetric('recovered')}
           />
           <MetricCard
-            title="Total Deaths"
+            code="04"
+            title="Total Fatalities"
             total={currentStats?.deaths}
             today={currentStats?.todayDeaths}
             type="deaths"
@@ -145,19 +155,21 @@ export default function App() {
           />
         </section>
 
-        {/* Two-Column Layout */}
+        {/* Two-Column Cockpit Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content: Map & Chart */}
+          {/* Main Visualizers: Map + Curve */}
           <div className="lg:col-span-2 space-y-6">
             {/* Interactive World Map */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-rose-500" />
-                  <h2 className="text-base font-bold text-white">Interactive Outbreak Map</h2>
+                  <Compass className="h-4 w-4 text-cyan-400" />
+                  <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white">
+                    GEOSPATIAL EPIDEMIOLOGY RADAR
+                  </h2>
                 </div>
-                <span className="text-xs text-slate-400">
-                  Click a bubble to inspect or focus a nation
+                <span className="text-[11px] font-mono text-cyan-500/80">
+                  CLICK NODE TO EXPAND TELEMETRY
                 </span>
               </div>
               <InteractiveMap
@@ -177,7 +189,7 @@ export default function App() {
             />
           </div>
 
-          {/* Right Column: Country Rankings Table & Quick Stats */}
+          {/* Right Column: Country Rankings Table & Diagnostics Card */}
           <div className="space-y-6">
             <CountryTable
               countries={countries}
@@ -185,76 +197,84 @@ export default function App() {
               onSelectCountry={handleSelectCountry}
             />
 
-            {/* Quick Insights Card */}
-            <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
-              <div className="flex items-center gap-2 text-rose-400">
-                <Info className="h-4 w-4" />
-                <h4 className="text-xs font-bold uppercase tracking-wider">
-                  Region Highlights ({activeCountryName})
-                </h4>
+            {/* Regional Deep Diagnostics Card */}
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-5 shadow-2xl space-y-3 font-mono">
+              <div className="flex items-center justify-between text-cyan-400 pb-2 border-b border-cyan-500/20">
+                <div className="flex items-center gap-2">
+                  <Terminal className="h-4 w-4" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider">
+                    LOCAL DIAGNOSTICS
+                  </h4>
+                </div>
+                <span className="text-[10px] bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 px-2 py-0.5 rounded">
+                  {selectedCountry.toUpperCase()}
+                </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                  <p className="text-slate-500">Critical ICU</p>
-                  <p className="font-bold text-slate-200 mt-0.5">
+              <div className="grid grid-cols-2 gap-2.5 text-xs">
+                <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80">
+                  <p className="text-[10px] text-slate-500 uppercase">Critical ICU</p>
+                  <p className="font-bold text-amber-400 mt-0.5">
                     {formatFullNumber(currentStats?.critical || 0)}
                   </p>
                 </div>
-                <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                  <p className="text-slate-500">Tests Performed</p>
-                  <p className="font-bold text-slate-200 mt-0.5">
+                <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80">
+                  <p className="text-[10px] text-slate-500 uppercase">Diagnostics Performed</p>
+                  <p className="font-bold text-cyan-300 mt-0.5">
                     {formatCompactNumber(currentStats?.tests || 0)}
                   </p>
                 </div>
-                <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                  <p className="text-slate-500">Cases / 1M</p>
+                <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80">
+                  <p className="text-[10px] text-slate-500 uppercase">Density / 1M</p>
                   <p className="font-bold text-slate-200 mt-0.5">
                     {formatFullNumber(currentStats?.casesPerOneMillion || 0)}
                   </p>
                 </div>
-                <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                  <p className="text-slate-500">Deaths / 1M</p>
-                  <p className="font-bold text-slate-200 mt-0.5">
+                <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80">
+                  <p className="text-[10px] text-slate-500 uppercase">Mortality / 1M</p>
+                  <p className="font-bold text-rose-400 mt-0.5">
                     {formatFullNumber(currentStats?.deathsPerOneMillion || 0)}
                   </p>
                 </div>
               </div>
 
-              <p className="text-[11px] text-slate-500 pt-1">
-                Data refreshed dynamically via public health repositories with automatic failover.
-              </p>
+              <div className="pt-1 text-[10px] text-slate-500 flex items-center justify-between">
+                <span>POPULATION:</span>
+                <span className="font-bold text-slate-300">
+                  {formatCompactNumber(currentStats?.population || 0)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950 py-6 mt-12 text-xs text-slate-500">
+      {/* Futuristic Command Center Footer */}
+      <footer className="border-t border-cyan-500/20 bg-[#030611] py-6 mt-12 text-xs font-mono text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>
-            Developed by{' '}
+            ENGINEERED BY{' '}
             <a
               href="https://github.com/Aditya090908"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-slate-300 hover:text-white underline underline-offset-4"
+              className="font-bold text-cyan-400 hover:text-cyan-300 underline underline-offset-4"
             >
-              Aditya090908
+              @Aditya090908
             </a>
-            . Licensed under MIT.
+            . LICENSED UNDER MIT.
           </p>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 text-[11px]">
             <a
               href="https://github.com/Aditya090908/covid19-tracker"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-400 hover:text-white transition-colors"
+              className="text-slate-400 hover:text-cyan-400 transition-colors"
             >
-              GitHub Repository
+              SOURCE REPOSITORY
             </a>
             <span>•</span>
-            <span className="text-slate-600">Built with React, Vite & Tailwind CSS</span>
+            <span className="text-slate-600">PULSE19 OBSERVATORY ENGINE</span>
           </div>
         </div>
       </footer>

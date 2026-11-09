@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { formatCompactNumber, formatFullNumber } from '../utils/formatters';
-import { TrendingUp, BarChart2 } from 'lucide-react';
+import { LineChart, BarChart3, Layers, Crosshair } from 'lucide-react';
 
 export default function TrendChart({
   historicalData,
@@ -8,6 +8,7 @@ export default function TrendChart({
   activeMetric = 'cases',
 }) {
   const [viewMode, setViewMode] = useState('cumulative'); // 'cumulative' | 'daily'
+  const [compareMode, setCompareMode] = useState(false); // overlay cases vs recovered
   const [hoverIndex, setHoverIndex] = useState(null);
 
   const seriesData = useMemo(() => {
@@ -16,22 +17,26 @@ export default function TrendChart({
     }
 
     const metricTimeline = historicalData[activeMetric];
+    const recoveredTimeline = historicalData.recovered || {};
     const dates = Object.keys(metricTimeline);
     const rawValues = Object.values(metricTimeline);
+    const rawRecovered = Object.values(recoveredTimeline);
 
     if (viewMode === 'cumulative') {
       return dates.map((date, i) => ({
         date,
         value: rawValues[i],
+        recovered: rawRecovered[i] || 0,
       }));
     } else {
-      // Daily difference
       return dates.map((date, i) => {
-        if (i === 0) return { date, value: 0 };
+        if (i === 0) return { date, value: 0, recovered: 0 };
         const diff = rawValues[i] - rawValues[i - 1];
+        const recDiff = (rawRecovered[i] || 0) - (rawRecovered[i - 1] || 0);
         return {
           date,
           value: diff > 0 ? diff : 0,
+          recovered: recDiff > 0 ? recDiff : 0,
         };
       });
     }
@@ -46,8 +51,8 @@ export default function TrendChart({
     return { min, max: max === min ? min + 1 : max, current };
   }, [seriesData]);
 
-  // SVG Chart Geometry
-  const width = 600;
+  // Chart Dimensions
+  const width = 640;
   const height = 240;
   const paddingX = 40;
   const paddingY = 30;
@@ -67,49 +72,82 @@ export default function TrendChart({
       .join(' ');
   }, [seriesData, stats]);
 
-  const activeColor = {
-    cases: '#f43f5e',
-    recovered: '#10b981',
-    deaths: '#94a3b8',
-    active: '#f59e0b',
-  }[activeMetric] || '#3b82f6';
+  const recoveredPoints = useMemo(() => {
+    if (!compareMode || seriesData.length <= 1) return '';
+    const chartW = width - paddingX * 2;
+    const chartH = height - paddingY * 2;
+
+    return seriesData
+      .map((d, i) => {
+        const x = paddingX + (i / (seriesData.length - 1)) * chartW;
+        const normalizedY = (d.recovered - stats.min) / (stats.max - stats.min);
+        const y = height - paddingY - normalizedY * chartH;
+        return `${x.toFixed(1)},${Math.max(paddingY, Math.min(height - paddingY, y)).toFixed(1)}`;
+      })
+      .join(' ');
+  }, [seriesData, stats, compareMode]);
+
+  const metricTheme = {
+    cases: { stroke: '#06b6d4', glow: 'rgba(6, 182, 212, 0.5)' },
+    active: { stroke: '#f59e0b', glow: 'rgba(245, 158, 11, 0.5)' },
+    recovered: { stroke: '#10b981', glow: 'rgba(16, 185, 129, 0.5)' },
+    deaths: { stroke: '#f43f5e', glow: 'rgba(244, 63, 94, 0.5)' },
+  }[activeMetric] || { stroke: '#06b6d4', glow: 'rgba(6, 182, 212, 0.5)' };
 
   return (
-    <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 shadow-xl">
-      {/* Header */}
+    <div className="bg-slate-900/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-5 shadow-2xl relative overflow-hidden">
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-rose-500" />
-            <h3 className="font-bold text-base text-white">Historical Trends</h3>
+            <LineChart className="h-4 w-4 text-cyan-400" />
+            <h3 className="font-mono font-bold text-sm tracking-wide text-white uppercase">
+              EPIDEMIOLOGICAL TRAJECTORY
+            </h3>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {countryName} • {activeMetric.toUpperCase()} ({viewMode})
+          <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+            LOCATION: {countryName.toUpperCase()} // METRIC: {activeMetric.toUpperCase()}
           </p>
         </div>
 
-        {/* View toggle */}
-        <div className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700/60 text-xs">
+        {/* Action Controls */}
+        <div className="flex items-center gap-2">
+          {/* Dual compare toggle */}
           <button
-            onClick={() => setViewMode('cumulative')}
-            className={`px-3 py-1 rounded-md font-medium transition-all ${
-              viewMode === 'cumulative'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
+            onClick={() => setCompareMode(!compareMode)}
+            className={`px-2.5 py-1 rounded-lg text-xs font-mono border transition-all flex items-center gap-1.5 ${
+              compareMode
+                ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
             }`}
           >
-            Cumulative
+            <Layers className="h-3.5 w-3.5" />
+            <span>+ RECOVERIES</span>
           </button>
-          <button
-            onClick={() => setViewMode('daily')}
-            className={`px-3 py-1 rounded-md font-medium transition-all ${
-              viewMode === 'daily'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Daily New
-          </button>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-slate-950/80 p-1 rounded-lg border border-slate-800 text-xs font-mono">
+            <button
+              onClick={() => setViewMode('cumulative')}
+              className={`px-2.5 py-1 rounded-md transition-all ${
+                viewMode === 'cumulative'
+                  ? 'bg-cyan-500 text-slate-950 font-bold shadow-[0_0_10px_rgba(6,182,212,0.4)]'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              CUMULATIVE
+            </button>
+            <button
+              onClick={() => setViewMode('daily')}
+              className={`px-2.5 py-1 rounded-md transition-all ${
+                viewMode === 'daily'
+                  ? 'bg-cyan-500 text-slate-950 font-bold shadow-[0_0_10px_rgba(6,182,212,0.4)]'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              DAILY INFLUX
+            </button>
+          </div>
         </div>
       </div>
 
@@ -123,13 +161,16 @@ export default function TrendChart({
               onMouseLeave={() => setHoverIndex(null)}
             >
               <defs>
-                <linearGradient id={`chart-grad-${activeMetric}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={activeColor} stopOpacity="0.35" />
-                  <stop offset="100%" stopColor={activeColor} stopOpacity="0.0" />
+                <linearGradient id="neon-area-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={metricTheme.stroke} stopOpacity="0.25" />
+                  <stop offset="100%" stopColor={metricTheme.stroke} stopOpacity="0.0" />
                 </linearGradient>
+                <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor={metricTheme.stroke} floodOpacity="0.7" />
+                </filter>
               </defs>
 
-              {/* Grid lines */}
+              {/* Grid Lines */}
               <line
                 x1={paddingX}
                 y1={paddingY}
@@ -151,30 +192,43 @@ export default function TrendChart({
                 y1={height - paddingY}
                 x2={width - paddingX}
                 y2={height - paddingY}
-                stroke="#334155"
+                stroke="#0891b2"
+                strokeOpacity="0.4"
               />
 
-              {/* Area fill */}
+              {/* Area Fill */}
               {points && (
                 <polygon
                   points={`${paddingX},${height - paddingY} ${points} ${width - paddingX},${height - paddingY}`}
-                  fill={`url(#chart-grad-${activeMetric})`}
+                  fill="url(#neon-area-grad)"
                 />
               )}
 
-              {/* Sparkline curve */}
+              {/* Comparison Curve for Recoveries */}
+              {recoveredPoints && (
+                <polyline
+                  fill="none"
+                  stroke="#10b981"
+                  strokeWidth="2"
+                  strokeDasharray="4 4"
+                  points={recoveredPoints}
+                />
+              )}
+
+              {/* Main Metric Curve */}
               {points && (
                 <polyline
                   fill="none"
-                  stroke={activeColor}
+                  stroke={metricTheme.stroke}
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  filter="url(#neon-glow)"
                   points={points}
                 />
               )}
 
-              {/* Interactive Hover Vertical Line and Circles */}
+              {/* Hover Trigger Vertical Columns */}
               {seriesData.map((d, i) => {
                 const chartW = width - paddingX * 2;
                 const chartH = height - paddingY * 2;
@@ -184,14 +238,13 @@ export default function TrendChart({
 
                 return (
                   <g key={i}>
-                    {/* Invisible hit targets */}
                     <rect
                       x={x - (chartW / seriesData.length) / 2}
                       y={0}
                       width={chartW / seriesData.length}
                       height={height}
                       fill="transparent"
-                      className="cursor-pointer"
+                      className="cursor-crosshair"
                       onMouseEnter={() => setHoverIndex(i)}
                     />
                     {hoverIndex === i && (
@@ -201,7 +254,7 @@ export default function TrendChart({
                           y1={paddingY}
                           x2={x}
                           y2={height - paddingY}
-                          stroke="#64748b"
+                          stroke="#22d3ee"
                           strokeWidth="1.5"
                           strokeDasharray="3 3"
                         />
@@ -210,8 +263,9 @@ export default function TrendChart({
                           cy={y}
                           r="5"
                           fill="#ffffff"
-                          stroke={activeColor}
+                          stroke={metricTheme.stroke}
                           strokeWidth="3"
+                          className="animate-pulse"
                         />
                       </>
                     )}
@@ -220,29 +274,42 @@ export default function TrendChart({
               })}
             </svg>
 
-            {/* Hover Tooltip Popup */}
+            {/* Floating Telemetry Tooltip */}
             {hoverIndex !== null && seriesData[hoverIndex] && (
-              <div className="absolute top-2 right-4 bg-slate-950/90 border border-slate-700 px-3 py-1.5 rounded-lg shadow-xl text-xs pointer-events-none backdrop-blur-md">
-                <p className="text-slate-400">{seriesData[hoverIndex].date}</p>
-                <p className="text-white font-bold">
-                  {formatFullNumber(seriesData[hoverIndex].value)} {activeMetric}
-                </p>
+              <div className="absolute top-2 right-4 bg-slate-950/95 border border-cyan-500/40 p-2.5 rounded-xl shadow-2xl text-xs font-mono pointer-events-none backdrop-blur-md min-w-[170px]">
+                <div className="flex items-center justify-between pb-1 mb-1 border-b border-slate-800 text-[10px] text-slate-400">
+                  <span>TIMESTAMP</span>
+                  <span className="text-cyan-400">{seriesData[hoverIndex].date}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300 uppercase">{activeMetric}:</span>
+                  <span className="font-bold text-white">
+                    {formatFullNumber(seriesData[hoverIndex].value)}
+                  </span>
+                </div>
+                {compareMode && (
+                  <div className="flex items-center justify-between mt-1 text-emerald-400">
+                    <span className="text-[11px]">RECOVERED:</span>
+                    <span className="font-bold">
+                      {formatFullNumber(seriesData[hoverIndex].recovered)}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
         ) : (
-          <div className="h-48 flex items-center justify-center text-slate-500 text-sm">
-            <BarChart2 className="h-5 w-5 mr-2 opacity-50" />
-            No timeline data available for this selection
+          <div className="h-48 flex items-center justify-center text-slate-500 font-mono text-xs">
+            NO TIMELINE TELEMETRY AVAILABLE
           </div>
         )}
       </div>
 
       {/* Axis Footer */}
-      <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-        <span>Min: {formatCompactNumber(stats.min)}</span>
-        <span>Current: {formatCompactNumber(stats.current)}</span>
-        <span>Peak: {formatCompactNumber(stats.max)}</span>
+      <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+        <span>MIN: {formatCompactNumber(stats.min)}</span>
+        <span className="text-cyan-400 font-bold">CURRENT: {formatCompactNumber(stats.current)}</span>
+        <span>PEAK: {formatCompactNumber(stats.max)}</span>
       </div>
     </div>
   );
