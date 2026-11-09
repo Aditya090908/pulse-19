@@ -1,191 +1,103 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { ZoomIn, ZoomOut, RotateCcw, MapPin, Info, Layers, Eye } from 'lucide-react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import { geoNaturalEarth1, geoPath, geoGraticule10 } from 'd3-geo';
+import * as topojson from 'topojson-client';
+import worldData from '../data/world-110m.json';
+import {
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Maximize2,
+  Minimize2,
+  Activity,
+  Layers,
+  Eye,
+  SlidersHorizontal,
+  Compass,
+  Radio,
+} from 'lucide-react';
 import { formatCompactNumber, formatFullNumber } from '../utils/formatters';
-import { calculateRecoveryPercentage } from '../utils/dataEngine';
+import {
+  calculateActiveCases,
+  calculateRecoveryPercentage,
+  calculateMortalityPercentage,
+  calculateCasesPerMillion,
+} from '../utils/dataEngine';
 
-// Simplified high-fidelity SVG paths for world landmasses and key epidemiological territories
-const REGIONS = [
-  // North America
-  {
-    code: 'USA',
-    iso2: 'US',
-    name: 'USA',
-    d: 'M 140,115 L 230,115 L 245,140 L 235,185 L 180,185 L 140,150 Z M 80,60 L 130,55 L 120,95 L 85,90 Z',
-    labelX: 185,
-    labelY: 150,
-  },
-  {
-    code: 'CAN',
-    iso2: 'CA',
-    name: 'Canada',
-    d: 'M 130,55 L 245,50 L 260,85 L 230,115 L 140,115 L 130,95 Z',
-    labelX: 180,
-    labelY: 85,
-  },
-  {
-    code: 'MEX',
-    iso2: 'MX',
-    name: 'Mexico',
-    d: 'M 145,185 L 195,185 L 210,230 L 175,225 Z',
-    labelX: 175,
-    labelY: 205,
-  },
+// ISO 3166-1 Numeric ID to ISO2 map for Natural Earth 110m TopoJSON
+const ISO_NUMERIC_MAP = {
+  '840': 'US',
+  '356': 'IN',
+  '250': 'FR',
+  '276': 'DE',
+  '076': 'BR',
+  '410': 'KR',
+  '392': 'JP',
+  '380': 'IT',
+  '826': 'GB',
+  '643': 'RU',
+  '792': 'TR',
+  '724': 'ES',
+  '036': 'AU',
+  '032': 'AR',
+  '124': 'CA',
+  '710': 'ZA',
+  '484': 'MX',
+  '818': 'EG',
+  '566': 'NG',
+  '702': 'SG',
+};
 
-  // South America
-  {
-    code: 'BRA',
-    iso2: 'BR',
-    name: 'Brazil',
-    d: 'M 255,250 L 320,260 L 340,305 L 300,360 L 260,330 L 240,280 Z',
-    labelX: 290,
-    labelY: 300,
-  },
-  {
-    code: 'ARG',
-    iso2: 'AR',
-    name: 'Argentina',
-    d: 'M 250,335 L 285,335 L 275,420 L 255,420 Z',
-    labelX: 265,
-    labelY: 375,
-  },
+const NAME_ALIASES = {
+  'United States of America': 'USA',
+  'United States': 'USA',
+  'United Kingdom': 'UK',
+  'Korea': 'South Korea',
+  'Dem. Rep. Korea': 'North Korea',
+  'Republic of Korea': 'South Korea',
+  'Russian Federation': 'Russia',
+};
 
-  // Europe
-  {
-    code: 'GBR',
-    iso2: 'GB',
-    name: 'UK',
-    d: 'M 430,95 L 445,95 L 440,120 L 428,115 Z',
-    labelX: 436,
-    labelY: 108,
-  },
-  {
-    code: 'FRA',
-    iso2: 'FR',
-    name: 'France',
-    d: 'M 440,120 L 465,120 L 460,145 L 435,145 Z',
-    labelX: 450,
-    labelY: 132,
-  },
-  {
-    code: 'DEU',
-    iso2: 'DE',
-    name: 'Germany',
-    d: 'M 465,110 L 490,110 L 488,135 L 465,135 Z',
-    labelX: 477,
-    labelY: 122,
-  },
-  {
-    code: 'ESP',
-    iso2: 'ES',
-    name: 'Spain',
-    d: 'M 425,145 L 452,145 L 445,170 L 420,165 Z',
-    labelX: 435,
-    labelY: 155,
-  },
-  {
-    code: 'ITA',
-    iso2: 'IT',
-    name: 'Italy',
-    d: 'M 470,138 L 488,142 L 492,175 L 478,168 Z',
-    labelX: 482,
-    labelY: 155,
-  },
-  {
-    code: 'RUS',
-    iso2: 'RU',
-    name: 'Russia',
-    d: 'M 500,50 L 780,50 L 760,120 L 580,125 L 495,100 Z',
-    labelX: 630,
-    labelY: 85,
-  },
+// 4-Tier Infection Heatmap Color Palette
+const HEATMAP_COLORS = {
+  low: '#0D9488',      // Teal
+  moderate: '#00D9F5', // Cyan
+  high: '#F59E0B',     // Orange
+  critical: '#F43F5E', // Pink/Red
+  baseline: '#0B1424', // Non-featured baseline landmass
+};
 
-  // Asia
-  {
-    code: 'TUR',
-    iso2: 'TR',
-    name: 'Turkey',
-    d: 'M 515,150 L 565,148 L 560,170 L 515,168 Z',
-    labelX: 540,
-    labelY: 160,
+const METRIC_CONFIG = {
+  cases: {
+    label: 'Confirmed Cases',
+    shortLabel: 'Confirmed',
+    thresholds: [3_000_000, 15_000_000, 35_000_000],
+    labels: ['< 3M', '3M - 15M', '15M - 35M', '> 35M'],
   },
-  {
-    code: 'IND',
-    iso2: 'IN',
-    name: 'India',
-    d: 'M 605,185 L 660,185 L 645,255 L 618,255 L 600,215 Z',
-    labelX: 630,
-    labelY: 215,
+  active: {
+    label: 'Active ICU Load',
+    shortLabel: 'Active',
+    thresholds: [20_000, 80_000, 250_000],
+    labels: ['< 20K', '20K - 80K', '80K - 250K', '> 250K'],
   },
-  {
-    code: 'JPN',
-    iso2: 'JP',
-    name: 'Japan',
-    d: 'M 760,150 L 780,155 L 775,185 L 755,180 Z',
-    labelX: 768,
-    labelY: 168,
+  recovered: {
+    label: 'Recovered Patients',
+    shortLabel: 'Recoveries',
+    thresholds: [3_000_000, 15_000_000, 35_000_000],
+    labels: ['< 3M', '3M - 15M', '15M - 35M', '> 35M'],
   },
-  {
-    code: 'KOR',
-    iso2: 'KR',
-    name: 'South Korea',
-    d: 'M 725,160 L 745,160 L 742,180 L 725,178 Z',
-    labelX: 735,
-    labelY: 170,
+  deaths: {
+    label: 'Cumulative Fatalities',
+    shortLabel: 'Fatalities',
+    thresholds: [30_000, 100_000, 300_000],
+    labels: ['< 30K', '30K - 100K', '100K - 300K', '> 300K'],
   },
-  {
-    code: 'SGP',
-    iso2: 'SG',
-    name: 'Singapore',
-    d: 'M 670,270 L 682,270 L 682,282 L 670,282 Z',
-    labelX: 676,
-    labelY: 276,
+  casesPerMillion: {
+    label: 'Cases / 1M Population',
+    shortLabel: 'Density/1M',
+    thresholds: [50_000, 150_000, 350_000],
+    labels: ['< 50K', '50K - 150K', '150K - 350K', '> 350K'],
   },
-
-  // Africa
-  {
-    code: 'EGY',
-    iso2: 'EG',
-    name: 'Egypt',
-    d: 'M 500,180 L 545,180 L 540,215 L 495,215 Z',
-    labelX: 520,
-    labelY: 198,
-  },
-  {
-    code: 'NGA',
-    iso2: 'NG',
-    name: 'Nigeria',
-    d: 'M 445,240 L 485,240 L 480,275 L 440,275 Z',
-    labelX: 462,
-    labelY: 258,
-  },
-  {
-    code: 'ZAF',
-    iso2: 'ZA',
-    name: 'South Africa',
-    d: 'M 495,355 L 540,355 L 530,410 L 485,405 Z',
-    labelX: 512,
-    labelY: 382,
-  },
-
-  // Oceania
-  {
-    code: 'AUS',
-    iso2: 'AU',
-    name: 'Australia',
-    d: 'M 710,310 L 810,315 L 800,395 L 715,385 Z',
-    labelX: 760,
-    labelY: 350,
-  },
-];
-
-// Aesthetic choropleth color scale based on case volume
-function getIntensityColor(cases) {
-  if (!cases || cases === 0) return '#1e293b';
-  if (cases >= 35_000_000) return '#f43f5e'; // Critical (Hot Coral / Rose)
-  if (cases >= 15_000_000) return '#f59e0b'; // High (Amber)
-  if (cases >= 5_000_000) return '#06b6d4';  // Moderate (Electric Cyan)
-  return '#0d9488';                          // Low / Contained (Teal)
-}
+};
 
 export default function WorldMap({
   countries = [],
@@ -193,14 +105,40 @@ export default function WorldMap({
   onSelectCountry,
   onOpenDetail,
 }) {
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [hoveredRegion, setHoveredRegion] = useState(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const containerRef = useRef(null);
   const svgRef = useRef(null);
 
-  // Map country statistics by iso2/iso3 for instant O(1) lookup
-  const countryStatsMap = useMemo(() => {
+  // States
+  const [metric, setMetric] = useState('cases');
+  const [mapStyle, setMapStyle] = useState('cyber'); // 'cyber' | 'tactical' | 'radar'
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [hoveredCountry, setHoveredCountry] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // 1. Build Natural Earth GeoJSON and Path Generator
+  const { countryFeatures, graticulePath, spherePath, pathGenerator } = useMemo(() => {
+    const geojson = topojson.feature(worldData, worldData.objects.countries);
+    const projection = geoNaturalEarth1().fitSize([960, 480], geojson);
+    const pathGen = geoPath().projection(projection);
+
+    const graticule = geoGraticule10();
+    const gratPath = pathGen(graticule);
+    const sphPath = pathGen({ type: 'Sphere' });
+
+    return {
+      countryFeatures: geojson.features || [],
+      graticulePath: gratPath,
+      spherePath: sphPath,
+      pathGenerator: pathGen,
+    };
+  }, []);
+
+  // 2. Index local countries for O(1) matching
+  const countryMap = useMemo(() => {
     const map = new Map();
     countries.forEach((c) => {
       if (c.iso2) map.set(c.iso2.toUpperCase(), c);
@@ -210,239 +148,480 @@ export default function WorldMap({
     return map;
   }, [countries]);
 
-  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.35, 2.8));
-  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.35, 0.8));
+  // Helper to resolve feature to local country
+  const resolveFeatureToCountry = useCallback(
+    (feature) => {
+      const numericId = String(feature.id).padStart(3, '0');
+      const iso2 = ISO_NUMERIC_MAP[numericId] || ISO_NUMERIC_MAP[String(feature.id)];
+      if (iso2 && countryMap.has(iso2.toUpperCase())) {
+        return countryMap.get(iso2.toUpperCase());
+      }
+
+      const name = feature.properties?.name;
+      if (name) {
+        const alias = NAME_ALIASES[name] || name;
+        if (countryMap.has(alias.toUpperCase())) {
+          return countryMap.get(alias.toUpperCase());
+        }
+      }
+      return null;
+    },
+    [countryMap]
+  );
+
+  // Calculate country color based on metric intensity
+  const getCountryFill = useCallback(
+    (country) => {
+      if (!country) return HEATMAP_COLORS.baseline;
+
+      let val = 0;
+      if (metric === 'cases') val = country.cases || 0;
+      else if (metric === 'active') val = calculateActiveCases(country.cases, country.recovered, country.deaths);
+      else if (metric === 'recovered') val = country.recovered || 0;
+      else if (metric === 'deaths') val = country.deaths || 0;
+      else if (metric === 'casesPerMillion') val = calculateCasesPerMillion(country.cases, country.population);
+
+      const [t1, t2, t3] = METRIC_CONFIG[metric].thresholds;
+
+      if (val >= t3) return HEATMAP_COLORS.critical;
+      if (val >= t2) return HEATMAP_COLORS.high;
+      if (val >= t1) return HEATMAP_COLORS.moderate;
+      if (val > 0) return HEATMAP_COLORS.low;
+      return HEATMAP_COLORS.baseline;
+    },
+    [metric]
+  );
+
+  // Zoom & Pan Handlers
+  const handleZoomIn = () => setZoom((z) => Math.min(z * 1.35, 6));
+  const handleZoomOut = () => setZoom((z) => Math.max(z / 1.35, 0.8));
   const handleResetZoom = () => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
   };
 
-  const handleMouseMove = (e, region) => {
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
-    setTooltipPos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-    setHoveredRegion(region);
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.15 : 0.88;
+    setZoom((z) => Math.min(Math.max(z * factor, 0.8), 6));
   };
 
-  const handleRegionClick = (region) => {
-    const data = countryStatsMap.get(region.code) || countryStatsMap.get(region.iso2);
-    if (data) {
-      if (onSelectCountry) onSelectCountry(data.iso2 || data.country);
-      if (onOpenDetail) onOpenDetail(data);
+  // Drag to pan (Mouse)
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      setPan({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
+      });
+    }
+
+    if (svgRef.current) {
+      const rect = svgRef.current.getBoundingClientRect();
+      setTooltipPos({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
     }
   };
 
-  const hoveredData = hoveredRegion
-    ? countryStatsMap.get(hoveredRegion.code) || countryStatsMap.get(hoveredRegion.iso2)
-    : null;
+  const handleMouseUp = () => setIsDragging(false);
+
+  // Touch Drag & Pan
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      setDragStart({
+        x: e.touches[0].clientX - pan.x,
+        y: e.touches[0].clientY - pan.y,
+      });
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (isDragging && e.touches.length === 1) {
+      setPan({
+        x: e.touches[0].clientX - dragStart.x,
+        y: e.touches[0].clientY - dragStart.y,
+      });
+    }
+  };
+
+  const handleTouchEnd = () => setIsDragging(false);
+
+  // Fullscreen Handler
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch((err) => console.error(err));
+    } else {
+      document.exitFullscreen().catch((err) => console.error(err));
+    }
+  };
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
+
+  // Country Click & Hover
+  const handleCountryClick = (feature) => {
+    const country = resolveFeatureToCountry(feature);
+    if (country) {
+      if (onSelectCountry) onSelectCountry(country.iso2 || country.country);
+      if (onOpenDetail) onOpenDetail(country);
+    }
+  };
+
+  // Centroid point calculation for selected country marker
+  const selectedFeatureCentroid = useMemo(() => {
+    if (!selectedCountry || selectedCountry === 'worldwide') return null;
+    const target = countryFeatures.find((f) => {
+      const c = resolveFeatureToCountry(f);
+      return (
+        c &&
+        (c.country.toLowerCase() === selectedCountry.toLowerCase() ||
+          c.iso2?.toLowerCase() === selectedCountry.toLowerCase())
+      );
+    });
+    if (!target) return null;
+    return pathGenerator.centroid(target);
+  }, [selectedCountry, countryFeatures, resolveFeatureToCountry, pathGenerator]);
+
+  const currentMetricConfig = METRIC_CONFIG[metric] || METRIC_CONFIG.cases;
 
   return (
-    <div className="relative w-full h-[460px] lg:h-[500px] rounded-2xl overflow-hidden border border-cyan-500/20 bg-slate-950/80 shadow-2xl flex flex-col select-none">
-      {/* Top Map HUD Bar */}
-      <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
-        <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-cyan-500/30 text-xs font-mono text-cyan-400 flex items-center gap-2 shadow-lg">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-          <span className="font-bold tracking-wider uppercase">LOCAL SVG CHOROPLETH</span>
+    <div
+      ref={containerRef}
+      className={`relative w-full rounded-2xl overflow-hidden border border-cyan-500/25 bg-[#050B16] shadow-2xl flex flex-col font-mono select-none ${
+        isFullscreen ? 'h-screen w-screen p-4 rounded-none' : 'h-[540px] sm:h-[580px]'
+      }`}
+    >
+      {/* 1. Header Toolbar */}
+      <div className="z-20 bg-[#0B1424]/90 backdrop-blur-md px-4 py-3 border-b border-cyan-500/20 flex flex-wrap items-center justify-between gap-3">
+        {/* Left Title & Status */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Radio className="h-4 w-4 text-[#00D9F5] animate-pulse" />
+            <h2 className="text-xs sm:text-sm font-bold tracking-wider uppercase text-white">
+              PULSE 19 GLOBAL MAP
+            </h2>
+          </div>
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00D9F5]/10 text-[#00D9F5] border border-[#00D9F5]/30 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00D9F5] animate-ping"></span>
+            LOCAL GEOGRAPHICAL DATA
+          </span>
+          <span className="hidden xl:inline text-[11px] text-slate-400">
+            Natural Earth 110m Projection // Zero-API Standalone
+          </span>
         </div>
-        <div className="hidden sm:flex bg-slate-900/80 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-800 text-[11px] font-mono text-slate-400">
-          ZERO-API // LOCAL VECTORS
+
+        {/* Right Controls Toolbar */}
+        <div className="flex items-center gap-2 text-xs">
+          {/* Metric Selector */}
+          <div className="flex items-center gap-1.5 bg-[#050B16]/90 p-1 px-2 rounded-xl border border-cyan-500/20">
+            <SlidersHorizontal className="h-3.5 w-3.5 text-[#00D9F5]" />
+            <span className="text-[10px] text-slate-400 hidden sm:inline">METRIC:</span>
+            <select
+              value={metric}
+              onChange={(e) => setMetric(e.target.value)}
+              className="bg-transparent text-white text-[11px] focus:outline-none cursor-pointer"
+            >
+              <option value="cases">Confirmed Cases</option>
+              <option value="active">Active ICU Load</option>
+              <option value="recovered">Recoveries</option>
+              <option value="deaths">Fatalities</option>
+              <option value="casesPerMillion">Cases / 1M Pop</option>
+            </select>
+          </div>
+
+          {/* Map Style Selector */}
+          <div className="hidden sm:flex items-center gap-1.5 bg-[#050B16]/90 p-1 px-2 rounded-xl border border-cyan-500/20">
+            <Layers className="h-3.5 w-3.5 text-[#00AFCB]" />
+            <select
+              value={mapStyle}
+              onChange={(e) => setMapStyle(e.target.value)}
+              className="bg-transparent text-white text-[11px] focus:outline-none cursor-pointer"
+            >
+              <option value="cyber">Cyber Observatory</option>
+              <option value="tactical">Tactical Surveillance</option>
+              <option value="radar">Deep Ocean Radar</option>
+            </select>
+          </div>
+
+          {/* Fullscreen Button */}
+          <button
+            onClick={toggleFullscreen}
+            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            className="p-1.5 rounded-xl border border-cyan-500/30 bg-[#050B16]/90 hover:bg-cyan-950/40 text-slate-300 hover:text-white transition-colors"
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
         </div>
       </div>
 
-      {/* Zoom / Reset Controls */}
-      <div className="absolute top-4 right-4 z-20 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-cyan-500/30 shadow-xl">
-        <button
-          onClick={handleZoomIn}
-          title="Zoom In"
-          className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-cyan-500/20 transition-colors"
-        >
-          <ZoomIn className="h-4 w-4" />
-        </button>
-        <button
-          onClick={handleZoomOut}
-          title="Zoom Out"
-          className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-cyan-500/20 transition-colors"
-        >
-          <ZoomOut className="h-4 w-4" />
-        </button>
-        <button
-          onClick={handleResetZoom}
-          title="Reset View"
-          className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-cyan-500/20 transition-colors"
-        >
-          <RotateCcw className="h-4 w-4" />
-        </button>
-      </div>
-
-      {/* SVG Map Canvas */}
-      <div className="w-full h-full relative cursor-crosshair overflow-hidden">
+      {/* 2. Interactive SVG Map Surface */}
+      <div
+        className="w-full flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onWheel={handleWheel}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <svg
           ref={svgRef}
-          viewBox="0 0 950 480"
-          className="w-full h-full transition-transform duration-300 ease-out"
-          style={{
-            transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
-          }}
-          onMouseLeave={() => setHoveredRegion(null)}
+          viewBox="0 0 960 480"
+          className="w-full h-full select-none"
         >
           <defs>
-            {/* Grid Pattern */}
-            <pattern id="map-grid" width="30" height="30" patternUnits="userSpaceOnUse">
-              <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(6, 182, 212, 0.05)" strokeWidth="0.8" />
-            </pattern>
-            {/* Glow Filters */}
-            <filter id="country-glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#06b6d4" floodOpacity="0.6" />
+            {/* Subtle Cyan Map Glow Filter */}
+            <filter id="border-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#00D9F5" floodOpacity="0.75" />
             </filter>
+
+            {/* Ocean Subtle Radial Background */}
+            <radialGradient id="ocean-grad" cx="50%" cy="50%" r="65%">
+              <stop offset="0%" stopColor="#0B1424" />
+              <stop offset="100%" stopColor="#050B16" />
+            </radialGradient>
           </defs>
 
-          {/* Background Technical Grid */}
-          <rect width="950" height="480" fill="#030712" />
-          <rect width="950" height="480" fill="url(#map-grid)" />
+          {/* Deep Ocean Surface */}
+          <rect width="960" height="480" fill="url(#ocean-grad)" />
 
-          {/* Global Longitude/Latitude Graticules */}
-          <line x1="50" y1="240" x2="900" y2="240" stroke="rgba(255,255,255,0.04)" strokeDasharray="5,5" />
-          <line x1="475" y1="40" x2="475" y2="440" stroke="rgba(255,255,255,0.04)" strokeDasharray="5,5" />
+          {/* World Projection Group with Smooth Zoom & Pan Matrix */}
+          <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`} className="transition-transform duration-75 ease-out">
+            {/* Global Sphere Outline */}
+            {spherePath && (
+              <path
+                d={spherePath}
+                fill="none"
+                stroke="rgba(0, 217, 245, 0.15)"
+                strokeWidth="1"
+              />
+            )}
 
-          {/* Render Vector Country Boundaries */}
-          <g className="transition-all duration-300">
-            {REGIONS.map((region) => {
-              const countryData = countryStatsMap.get(region.code) || countryStatsMap.get(region.iso2);
-              const cases = countryData ? countryData.cases : 0;
-              const fillColor = getIntensityColor(cases);
-              const isSelected = selectedCountry &&
-                (selectedCountry.toLowerCase() === region.name.toLowerCase() ||
-                 selectedCountry.toLowerCase() === region.iso2.toLowerCase());
-              const isHovered = hoveredRegion?.code === region.code;
+            {/* Subtle Latitude & Longitude Graticule Lines */}
+            {graticulePath && (
+              <path
+                d={graticulePath}
+                fill="none"
+                stroke="rgba(0, 217, 245, 0.05)"
+                strokeWidth="0.5"
+                strokeDasharray="2,3"
+              />
+            )}
+
+            {/* Real Geographical Country Boundaries (Natural Earth 110m) */}
+            {countryFeatures.map((feature, idx) => {
+              const country = resolveFeatureToCountry(feature);
+              const pathD = pathGenerator(feature);
+              if (!pathD) return null;
+
+              const isSelected =
+                country &&
+                selectedCountry &&
+                (country.country.toLowerCase() === selectedCountry.toLowerCase() ||
+                  country.iso2?.toLowerCase() === selectedCountry.toLowerCase());
+
+              const isHovered = hoveredCountry?.featureId === feature.id;
+              const fill = getCountryFill(country);
 
               return (
-                <g key={region.code} className="cursor-pointer group">
-                  <path
-                    d={region.d}
-                    fill={fillColor}
-                    fillOpacity={isHovered ? 0.95 : isSelected ? 0.9 : 0.65}
-                    stroke={isSelected ? '#22d3ee' : isHovered ? '#00f0ff' : 'rgba(255,255,255,0.18)'}
-                    strokeWidth={isSelected || isHovered ? 2.5 : 1.2}
-                    filter={isSelected || isHovered ? 'url(#country-glow)' : 'none'}
-                    className="transition-all duration-200"
-                    onMouseMove={(e) => handleMouseMove(e, region)}
-                    onClick={() => handleRegionClick(region)}
-                  />
-
-                  {/* Pulsing beacon marker on territory centroid */}
-                  <circle
-                    cx={region.labelX}
-                    cy={region.labelY}
-                    r={isHovered ? 4.5 : 2.5}
-                    fill={isHovered ? '#ffffff' : '#06b6d4'}
-                    className="pointer-events-none transition-all"
-                  />
-                  {isSelected && (
-                    <circle
-                      cx={region.labelX}
-                      cy={region.labelY}
-                      r="9"
-                      fill="none"
-                      stroke="#06b6d4"
-                      strokeWidth="1.5"
-                      strokeDasharray="2,2"
-                      className="animate-spin pointer-events-none"
-                    />
-                  )}
-
-                  {/* Text code label */}
-                  <text
-                    x={region.labelX}
-                    y={region.labelY - 7}
-                    textAnchor="middle"
-                    fill={isHovered ? '#ffffff' : '#94a3b8'}
-                    fontSize="9"
-                    fontFamily="monospace"
-                    fontWeight="bold"
-                    className="pointer-events-none select-none transition-colors"
-                  >
-                    {region.iso2}
-                  </text>
-                </g>
+                <path
+                  key={feature.id || idx}
+                  d={pathD}
+                  fill={fill}
+                  stroke={
+                    isSelected
+                      ? '#00D9F5'
+                      : isHovered
+                      ? '#00D9F5'
+                      : 'rgba(255, 255, 255, 0.12)'
+                  }
+                  strokeWidth={isSelected || isHovered ? 1.6 / zoom : 0.6 / zoom}
+                  filter={isSelected || isHovered ? 'url(#border-glow)' : 'none'}
+                  className="transition-colors duration-200 cursor-pointer"
+                  onMouseEnter={() => {
+                    setHoveredCountry({
+                      featureId: feature.id,
+                      name: feature.properties?.name || 'Uncharted Territory',
+                      country,
+                    });
+                  }}
+                  onMouseLeave={() => setHoveredCountry(null)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCountryClick(feature);
+                  }}
+                />
               );
             })}
+
+            {/* Selected Country Location Marker & Pulsing Radar Halo */}
+            {selectedFeatureCentroid && !isNaN(selectedFeatureCentroid[0]) && (
+              <g transform={`translate(${selectedFeatureCentroid[0]}, ${selectedFeatureCentroid[1]})`}>
+                <circle r={9 / zoom} fill="none" stroke="#00D9F5" strokeWidth={1.5 / zoom} className="animate-ping" opacity="0.6" />
+                <circle r={4 / zoom} fill="#00D9F5" stroke="#ffffff" strokeWidth={1 / zoom} />
+              </g>
+            )}
           </g>
         </svg>
 
-        {/* Hover Floating Tooltip */}
-        {hoveredRegion && hoveredData && (
+        {/* Subtle Horizontal Animated Scanning Line */}
+        <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#00D9F5]/40 to-transparent pointer-events-none animate-scanline" />
+
+        {/* Floating Zoom & Pan Control Panel (Top-Right) */}
+        <div className="absolute top-4 right-4 z-20 flex flex-col gap-1.5 bg-[#0B1424]/90 backdrop-blur-md p-1.5 rounded-xl border border-cyan-500/30 shadow-2xl">
+          <button
+            onClick={handleZoomIn}
+            title="Zoom In (or use Mouse Wheel)"
+            className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-cyan-500/20 transition-colors"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+          <button
+            onClick={handleZoomOut}
+            title="Zoom Out"
+            className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-cyan-500/20 transition-colors"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          <button
+            onClick={handleResetZoom}
+            title="Reset View Orientation"
+            className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-cyan-500/20 transition-colors"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Interactive Floating Hover Tooltip */}
+        {hoveredCountry && (
           <div
-            className="absolute z-30 pointer-events-none bg-slate-950/95 border border-cyan-500/50 p-3 rounded-xl shadow-2xl backdrop-blur-md min-w-[210px] font-mono text-xs transition-all transform -translate-x-1/2 -translate-y-full"
+            className="absolute z-30 pointer-events-none bg-[#050B16]/95 border border-[#00D9F5]/50 p-3.5 rounded-xl shadow-2xl backdrop-blur-md min-w-[220px] max-w-[280px] text-xs transform -translate-x-1/2 -translate-y-full transition-all"
             style={{
-              left: `${Math.max(110, Math.min(tooltipPos.x, 840))}px`,
-              top: `${Math.max(15, tooltipPos.y - 12)}px`,
+              left: `${Math.max(120, Math.min(tooltipPos.x, (containerRef.current?.clientWidth || 960) - 120))}px`,
+              top: `${Math.max(20, tooltipPos.y - 12)}px`,
             }}
           >
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-cyan-500/30">
               <div className="flex items-center gap-2">
-                <span className="text-base">{hoveredData.flag || '🌐'}</span>
-                <span className="font-bold text-white uppercase text-sm">
-                  {hoveredData.country}
+                <span className="text-base select-none">
+                  {hoveredCountry.country?.flag || '🌐'}
+                </span>
+                <span className="font-bold text-white uppercase text-sm truncate">
+                  {hoveredCountry.country?.country || hoveredCountry.name}
                 </span>
               </div>
-              <span className="text-[10px] bg-cyan-950 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-800">
-                {hoveredData.iso2}
+              <span className="text-[10px] bg-cyan-950 text-[#00D9F5] px-1.5 py-0.5 rounded border border-cyan-800">
+                {hoveredCountry.country?.iso2 || 'GEO'}
               </span>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex justify-between text-slate-300">
-                <span className="text-cyan-400">Confirmed:</span>
-                <span className="font-bold">{formatFullNumber(hoveredData.cases)}</span>
+            {hoveredCountry.country ? (
+              <div className="space-y-1.5 text-slate-200">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Confirmed:</span>
+                  <span className="font-bold text-white">
+                    {formatFullNumber(hoveredCountry.country.cases)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-amber-400">Active Load:</span>
+                  <span className="font-bold">
+                    {formatFullNumber(
+                      calculateActiveCases(
+                        hoveredCountry.country.cases,
+                        hoveredCountry.country.recovered,
+                        hoveredCountry.country.deaths
+                      )
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-emerald-400">Recoveries:</span>
+                  <span className="font-bold">
+                    {formatFullNumber(hoveredCountry.country.recovered)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-rose-400">Fatalities:</span>
+                  <span className="font-bold">
+                    {formatFullNumber(hoveredCountry.country.deaths)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-[11px] pt-1 border-t border-slate-800 text-slate-400">
+                  <span>Cases / 1M:</span>
+                  <span className="font-bold text-cyan-300">
+                    {formatFullNumber(
+                      calculateCasesPerMillion(
+                        hoveredCountry.country.cases,
+                        hoveredCountry.country.population
+                      )
+                    )}
+                  </span>
+                </div>
+                <div className="pt-2 text-[10px] text-[#00D9F5] flex items-center justify-center gap-1">
+                  <Eye className="h-3 w-3" /> Click to open detailed dossier
+                </div>
               </div>
-              <div className="flex justify-between text-slate-300">
-                <span className="text-emerald-400">Recovered:</span>
-                <span className="font-bold">{formatFullNumber(hoveredData.recovered)}</span>
+            ) : (
+              <div className="space-y-1 text-slate-400 text-[11px]">
+                <p>Monitored Baseline Territory</p>
+                <p className="text-[10px] text-slate-500">
+                  Select a featured territory for detailed telemetry.
+                </p>
               </div>
-              <div className="flex justify-between text-slate-300">
-                <span className="text-rose-400">Fatalities:</span>
-                <span className="font-bold">{formatFullNumber(hoveredData.deaths)}</span>
-              </div>
-              <div className="flex justify-between text-slate-300">
-                <span className="text-amber-400">Recovery Rate:</span>
-                <span className="font-bold">
-                  {calculateRecoveryPercentage(hoveredData.recovered, hoveredData.cases)}%
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-2 pt-1.5 border-t border-slate-800 text-[10px] text-cyan-400/80 flex items-center justify-center gap-1">
-              <Eye className="h-3 w-3" /> Click to open detailed dossier
-            </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Bottom Map Legend */}
-      <div className="bg-slate-900/90 border-t border-cyan-500/20 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-        <div className="flex items-center gap-2 text-slate-400">
-          <Layers className="h-3.5 w-3.5 text-cyan-400" />
-          <span>INFECTION INTENSITY:</span>
+      {/* 3. Bottom Gradient Legend & Projection Meta */}
+      <div className="bg-[#0B1424]/90 border-t border-cyan-500/20 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+        {/* Metric Label */}
+        <div className="flex items-center gap-2 text-slate-300">
+          <Activity className="h-3.5 w-3.5 text-[#00D9F5]" />
+          <span className="font-bold text-white uppercase">{currentMetricConfig.label}</span>
+          <span className="text-[11px] text-slate-400">INTENSITY SCALE:</span>
         </div>
-        <div className="flex items-center gap-4">
+
+        {/* 4-Tier Clean Gradient Legend Chips */}
+        <div className="flex items-center gap-3 sm:gap-5 flex-wrap">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#0d9488]"></span>
-            <span className="text-slate-300 text-[11px]">&lt; 5M</span>
+            <span className="w-3 h-3 rounded bg-[#0D9488] shadow-sm"></span>
+            <span className="text-slate-300 text-[11px] font-bold">
+              {currentMetricConfig.labels[0]}
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#06b6d4]"></span>
-            <span className="text-slate-300 text-[11px]">5M - 15M</span>
+            <span className="w-3 h-3 rounded bg-[#00D9F5] shadow-sm"></span>
+            <span className="text-slate-300 text-[11px] font-bold">
+              {currentMetricConfig.labels[1]}
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#f59e0b]"></span>
-            <span className="text-slate-300 text-[11px]">15M - 35M</span>
+            <span className="w-3 h-3 rounded bg-[#F59E0B] shadow-sm"></span>
+            <span className="text-slate-300 text-[11px] font-bold">
+              {currentMetricConfig.labels[2]}
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#f43f5e]"></span>
-            <span className="text-slate-300 text-[11px]">&gt; 35M</span>
+            <span className="w-3 h-3 rounded bg-[#F43F5E] shadow-sm"></span>
+            <span className="text-slate-300 text-[11px] font-bold">
+              {currentMetricConfig.labels[3]}
+            </span>
           </div>
         </div>
       </div>

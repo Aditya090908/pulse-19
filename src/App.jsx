@@ -213,27 +213,13 @@ export default function App() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Visualizers Column (Map + Trajectory Curve + Deep Diagnostics) */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Interactive World Map (Local SVG Choropleth) */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-cyan-400" />
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-                      INTERACTIVE VECTOR CHOROPLETH MAP
-                    </h2>
-                  </div>
-                  <span className="text-[11px] text-cyan-500/80">
-                    CLICK TERRITORY TO OPEN FULL DOSSIER
-                  </span>
-                </div>
-
-                <WorldMap
-                  countries={countries}
-                  selectedCountry={selectedCountry}
-                  onSelectCountry={handleSelectCountry}
-                  onOpenDetail={handleOpenDetail}
-                />
-              </div>
+              {/* Interactive Natural Earth Geographical Surveillance Map */}
+              <WorldMap
+                countries={countries}
+                selectedCountry={selectedCountry}
+                onSelectCountry={handleSelectCountry}
+                onOpenDetail={handleOpenDetail}
+              />
 
               {/* Upgraded Trajectory Chart */}
               <TrendChart
