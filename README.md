@@ -1,112 +1,131 @@
-# 🛰️ PULSE19 — Global Epidemiological Bio-Observatory
+# 🛰️ PULSE 19 — Standalone Epidemiological Bio-Observatory (Zero-API)
 
 [![React](https://img.shields.io/badge/React-18.3-06B6D4?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-6.2-646CFF?logo=vite)](https://vitejs.dev/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-00FFaa.svg)](LICENSE)
+[![Zero API](https://img.shields.io/badge/API-NONE%20(100%25%20Offline)-brightgreen)](#)
 
-An advanced real-time epidemiological telemetry and bio-surveillance command center. Designed with a custom **Obsidian & Electric Cyan** aesthetic, featuring multi-curve trajectory visualizers, regional diagnostics telemetry, and algorithmic severity ratios.
+A senior-engineered, zero-API epidemiological surveillance and public health telemetry dashboard. Built entirely using client-side React 18, Tailwind CSS, and local JSON datasets with a custom **Cyber-Obsidian & Electric Cyan** observatory interface.
 
----
-
-## ⚡ Bespoke Design & Capabilities
-
-- **📡 Bio-Intelligence Telemetry Bar**:
-  - Live algorithmic ratio computations across 230+ monitored territories.
-  - Real-time **Global Recovery Ratio %**, **Case Fatality Rate (CFR %)**, and **ICU Severity Index** with glowing neon progress gauges.
-
-- **📊 Command Cockpit Metrics**:
-  - Monospace telemetry tags (`[01] Confirmed Influx`, `[02] Active Load`, `[03] Full Recoveries`, `[04] Fatalities`).
-  - Active metric selection with glowing cyan, amber, emerald, and coral illumination states.
-  - Monospace 24h influx delta badges.
-
-- **📈 Multi-Curve Trajectory Visualizer**:
-  - High-performance SVG sparklines with custom glowing filters (`feDropShadow`).
-  - **Dual Compare Mode**: Overlay confirmed cases against recoveries simultaneously on the same timeline.
-  - Interactive crosshair scrubber with instant timestamp and volume inspection.
-  - One-click toggling between **Cumulative** trajectory and **Daily Influx** delta.
-
-- **🔬 Regional Deep Diagnostics**:
-  - Detailed diagnostic panel reporting Critical ICU load, Tests Conducted, Infection Density per 1M, and Mortality per 1M.
-  - Real-time population telemetry and per-capita testing ratios.
-
-- **📋 Territory Surveillance Matrix**:
-  - Searchable node rankings with country flag telemetry.
-  - One-click filters: `TOP 10 Nodes`, `>95% Recovery Rate`, and custom multi-metric sorting (`CASES`, `+24H`, `REC`, `DEATHS`).
-  - Integrated micro-progress bars on every country row.
-
-- **🛡️ 100% Resilient Architecture**:
-  - Live data ingestion from REST APIs with zero-latency failover to embedded telemetry datasets for uninterrupted offline performance.
+> [!NOTE]
+> **Dataset Classification**: This project operates strictly on a **local simulated demonstration archive (Reference Date: October 2024)**. It makes **zero external API calls**, requires **no API keys**, and has **no backend dependency**.
 
 ---
 
-## 🛠️ Architecture & Tech Stack
+## 🌟 Enhanced Capabilities
 
-| Layer | Technology |
-|---|---|
-| **Frontend Framework** | React 18 (Functional Components, Custom Hooks) |
-| **Bundler & Tooling** | Vite 6 (Lightning-fast HMR and ESM build pipeline) |
-| **Theme & UI System** | Custom Tailwind CSS Cyber-Obsidian / Neon-Cyan System |
-| **Data Visualization** | Responsive SVG Line Engines with SVG Glow Filter primitives |
-| **Iconography** | Lucide React |
+### 1. 🗺️ Local Interactive Vector World Map
+- Built with custom, self-contained SVG country boundaries (zero external map tiles or CDN requests).
+- **Infection Intensity Choropleth**: Color-coded across 4 dynamic severity thresholds (`<5M`, `5M-15M`, `15M-35M`, `>35M`).
+- **Interactive Tooltips**: Displays country flag, ISO codes, confirmed cases, recoveries, fatalities, and recovery rates on hover.
+- **Interactive Controls**: Zoom In (`+`), Zoom Out (`-`), and Reset (`↺`) view controls.
+- **Deep Inspection**: Clicking any territory launches the dedicated **Country Detail Dossier**.
+
+### 2. 🗂️ Country Detail Dossier Modal
+- Comprehensive telemetry card for any clicked nation.
+- Computes active ICU load, recovery %, mortality %, cases per 1M, and deaths per 1M using reusable mathematical utilities.
+- Interactive 7-day influx progression sparkline.
+
+### 3. 📈 Multi-Timeframe Epidemiological Trajectory Engine
+- **Timeframe Filtering**: One-click toggling between **7-Day**, **30-Day**, **90-Day**, and **All-Time** historical timelines.
+- **Metric Selectors**: Filter curves by **Confirmed Cases**, **Recoveries**, or **Fatalities**.
+- **Curve Comparisons**: Overlay recovery curves against infection curves simultaneously.
+- **Dual Display Modes**: Toggle between **Cumulative Total** and **Daily Influx Delta**.
+- **Crosshair Hover Scrubber**: Precision hover inspection with real-time timestamps and values.
+
+### 4. 📋 Territory Surveillance Matrix
+- Real-time instant search by country name or ISO2/ISO3 code.
+- Multi-column sorting: Total Cases, 24h Influx, Recoveries, Deaths, and Recovery Rate %.
+- Quick filter pills: `ALL`, `TOP 10`, `>95% REC`, and `>2% CFR`.
+- Inline visual recovery progress bars for every nation.
+- Clicking any row opens its detailed telemetry dossier.
+
+### 5. ⚡ Advanced Operational Utilities
+- **⌨️ Ctrl + K Command Palette**: Universal spotlight search for rapid territory navigation, metric switching, and action execution.
+- **📥 Client-Side CSV Export**: Generates and downloads standard CSV surveillance datasets instantly with zero dependencies.
+- **🖨️ Client-Side PDF Report Generator**: Dedicated `@media print` formatted executive report view ready for browser print or Save as PDF.
+- **🔔 Epidemiological Bulletins Drawer**: Slide-over drawer displaying categorized health bulletins and alerts from local JSON.
+- **🌓 Theme Engine**: Switch between **Cyber Obsidian** (Dark Mode) and **Clinical Observatory** (Light Mode).
+- **⏳ Loading Skeletons & Empty States**: Polished shimmer skeletons during state changes and informative fallback states.
 
 ---
 
-## 📁 Source Code Organization
+## 📁 Local Data Architecture (`src/data/`)
 
 ```
-D:\pulse-19/
+src/data/
+├── global-stats.json       # Worldwide epidemiological telemetry & reference dates
+├── countries.json          # 20-nation local baseline dataset with flags & coords
+├── historical-stats.json   # 7D, 30D, 90D, and All-Time chronological time-series
+└── alerts.json             # Categorized surveillance dispatches & bulletins
+```
+
+All calculations are centralized inside `src/utils/dataEngine.js`:
+- `calculateActiveCases(cases, recovered, deaths)`
+- `calculateRecoveryPercentage(recovered, cases)`
+- `calculateMortalityPercentage(deaths, cases)`
+- `calculateCasesPerMillion(cases, population)`
+- `calculateDeathsPerMillion(deaths, population)`
+- `sortCountries(countries, sortBy, sortDirection)`
+- `filterCountries(countries, options)`
+- `exportToCSV(countries, filename)`
+- `triggerPrintReport()`
+
+---
+
+## 🛠️ Project Structure
+
+```
+D:\covid-tracker/
 ├── src/
 │   ├── components/
-│   │   ├── Header.jsx           # Command center navigation & telemetry indicators
-│   │   ├── GlobalStatusBar.jsx  # Recovery, Lethality & ICU telemetry gauges
-│   │   ├── MetricCard.jsx       # Micro-meter telemetry metric cards
-│   │   ├── TrendChart.jsx       # Glowing SVG multi-curve trajectory engine
-│   │   └── CountryTable.jsx     # Node surveillance matrix with quick filters
+│   │   ├── Header.jsx              # Command center navigation, demo label, controls
+│   │   ├── GlobalStatusBar.jsx     # Global recovery, lethality & ICU ratio gauges
+│   │   ├── MetricCard.jsx          # Telemetry metric cards with loading skeletons
+│   │   ├── WorldMap.jsx            # Local SVG Choropleth Map with zoom/reset
+│   │   ├── TrendChart.jsx          # Multi-timeframe SVG trajectory engine
+│   │   ├── CountryTable.jsx        # Surveillance matrix with CSV export & filters
+│   │   ├── CountryDetailModal.jsx  # Detailed country telemetry dossier modal
+│   │   ├── CommandPalette.jsx      # Ctrl + K universal spotlight modal
+│   │   └── AlertsDrawer.jsx        # Dispatches & surveillance bulletins drawer
+│   ├── data/                       # Single source of truth local JSON datasets
+│   │   ├── global-stats.json
+│   │   ├── countries.json
+│   │   ├── historical-stats.json
+│   │   └── alerts.json
 │   ├── services/
-│   │   ├── api.js               # Resilient REST client with auto-failover
-│   │   └── mockData.js          # High-fidelity offline telemetry dataset
+│   │   └── dataService.js          # Synchronous zero-API data provider
 │   ├── utils/
-│   │   └── formatters.js        # Precision number and date formatters
-│   ├── App.jsx                  # Main command center shell
-│   ├── index.css                # Cyber-grid background & neon glow utility rules
-│   └── main.jsx                 # React root bootstrap
-├── index.html                   # HTML entry with font preloads
-├── package.json                 # Dependency manifest
-├── tailwind.config.js           # Design tokens & color system
-└── vite.config.js               # Build & dev server configuration
+│   │   ├── dataEngine.js           # Reusable mathematical & export utilities
+│   │   └── formatters.js           # Precision number and date formatters
+│   ├── App.jsx                     # Central observatory dashboard coordinator
+│   ├── index.css                   # Cyber-grid, print stylesheet & theme rules
+│   └── main.jsx                    # Application entry
+├── index.html                      # HTML shell & font preloads
+├── package.json                    # Project manifest
+├── tailwind.config.js              # Theme design tokens
+└── vite.config.js                  # Vite configuration
 ```
 
 ---
 
-## 🚀 Local Development Setup
+## 🚀 Running the Application
 
 ### Prerequisites
-- Node.js (v18+) & `npm`
+- Node.js (v18+)
 
-### Instructions
+### Development Server
+```bash
+npm install
+npm run dev
+```
+Open **`http://localhost:3000`** in your browser.
 
-1. **Clone repository:**
-   ```bash
-   git clone https://github.com/Aditya090908/pulse-19.git
-   cd pulse-19
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Start local observatory server:**
-   ```bash
-   npm run dev
-   ```
-   Open `http://localhost:3000` in your browser.
-
-4. **Compile optimized production build:**
-   ```bash
-   npm run build
-   ```
+### Production Build
+```bash
+npm run build
+```
 
 ---
 
@@ -118,4 +137,4 @@ D:\pulse-19/
 
 ## 📄 License
 
-Open-source and released under the [MIT License](LICENSE) — engineered by Aditya090908.
+Open-source and licensed under the [MIT License](LICENSE).

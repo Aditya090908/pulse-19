@@ -1,0 +1,23 @@
+{
+  "datasetInfo": {
+    "label": "DEMO EPIDEMIOLOGICAL DATASET",
+    "referenceDate": "October 2024",
+    "lastAudit": "2024-10-15T00:00:00Z",
+    "sourceNote": "Simulated Archival Telemetry for Frontend Demonstration (Zero-API)",
+    "version": "1.4.0"
+  },
+  "cases": 704753890,
+  "todayCases": 14230,
+  "deaths": 7010681,
+  "todayDeaths": 89,
+  "recovered": 675619811,
+  "todayRecovered": 16450,
+  "active": 22123398,
+  "critical": 38412,
+  "casesPerOneMillion": 90412,
+  "deathsPerOneMillion": 899,
+  "tests": 7014023194,
+  "testsPerOneMillion": 875658,
+  "population": 8010000000,
+  "affectedCountries": 231
+}

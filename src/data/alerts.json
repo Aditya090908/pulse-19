@@ -1,0 +1,38 @@
+[
+  {
+    "id": "ALT-2024-001",
+    "timestamp": "2024-10-15T06:30:00Z",
+    "severity": "info",
+    "region": "Global Observatory",
+    "title": "Archival Telemetry Audit Completed",
+    "message": "Global health dataset baseline recalibrated. Total monitored territories: 231. Zero API dependency mode active.",
+    "read": false
+  },
+  {
+    "id": "ALT-2024-002",
+    "timestamp": "2024-10-14T18:15:00Z",
+    "severity": "warning",
+    "region": "Europe / West",
+    "title": "Seasonal Variant Circulation",
+    "message": "Sub-lineage monitoring active in Western Europe. Test density tracking shows steady recovery rates (>97%).",
+    "read": false
+  },
+  {
+    "id": "ALT-2024-003",
+    "timestamp": "2024-10-13T12:00:00Z",
+    "severity": "success",
+    "region": "Asia-Pacific",
+    "title": "Hospitalization Load Declining",
+    "message": "Critical ICU index reduced by 14% across East Asia observatories over the preceding 30-day monitoring window.",
+    "read": true
+  },
+  {
+    "id": "ALT-2024-004",
+    "timestamp": "2024-10-12T09:45:00Z",
+    "severity": "critical",
+    "region": "Americas",
+    "title": "Surveillance Cluster Flagged",
+    "message": "Regional test positivity fluctuations detected in metropolitan nodes. High density genomic sequencing deployed.",
+    "read": true
+  }
+]

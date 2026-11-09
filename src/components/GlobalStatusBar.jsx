@@ -1,21 +1,32 @@
 import React from 'react';
 import { ShieldAlert, Crosshair, HeartPulse, Activity } from 'lucide-react';
+import {
+  calculateRecoveryPercentage,
+  calculateMortalityPercentage,
+  calculateActiveCases,
+} from '../utils/dataEngine';
 
-export default function GlobalStatusBar({ stats }) {
+export default function GlobalStatusBar({ stats, loading = false }) {
+  if (loading) {
+    return (
+      <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 animate-pulse h-20"></div>
+    );
+  }
+
   if (!stats) return null;
 
   const totalCases = stats.cases || 1;
   const totalRecovered = stats.recovered || 0;
   const totalDeaths = stats.deaths || 0;
-  const activeCases = stats.active || 1;
+  const activeCases = calculateActiveCases(totalCases, totalRecovered, totalDeaths);
   const criticalCases = stats.critical || 0;
 
-  const recoveryRate = ((totalRecovered / totalCases) * 100).toFixed(2);
-  const fatalityRate = ((totalDeaths / totalCases) * 100).toFixed(2);
-  const criticalRate = ((criticalCases / activeCases) * 100).toFixed(2);
+  const recoveryRate = calculateRecoveryPercentage(totalRecovered, totalCases);
+  const fatalityRate = calculateMortalityPercentage(totalDeaths, totalCases);
+  const criticalRate = Number(((criticalCases / (activeCases || 1)) * 100).toFixed(2));
 
   return (
-    <section className="bg-slate-900/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-4 shadow-xl">
+    <section className="bg-slate-900/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-4 shadow-xl font-mono">
       <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
         {/* Left: Bio-Surveillance Status Indicator */}
         <div className="flex items-center gap-3 w-full lg:w-auto">
@@ -25,25 +36,25 @@ export default function GlobalStatusBar({ stats }) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono tracking-widest uppercase text-cyan-400 font-bold">
-                BIO-INTELLIGENCE TELEMETRY
+              <span className="text-[11px] tracking-widest uppercase text-cyan-400 font-bold">
+                LOCAL TELEMETRY ARCHIVE
               </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 font-mono">
-                FEED ACTIVE
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/60">
+                100% OFFLINE
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Live algorithmic surveillance across {stats.affectedCountries || '230+'} territories
+              Monitoring {stats.affectedCountries || '231'} territories // Zero External APIs
             </p>
           </div>
         </div>
 
-        {/* Right: Key Ratios */}
+        {/* Right: Key Calculated Ratios */}
         <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full lg:w-auto">
           {/* Recovery Ratio */}
           <div className="bg-slate-950/70 border border-emerald-500/20 rounded-xl p-2.5 px-3 min-w-[120px]">
             <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
-              <span className="flex items-center gap-1 font-mono text-emerald-400">
+              <span className="flex items-center gap-1 text-emerald-400">
                 <HeartPulse className="h-3 w-3" /> RECOVERY
               </span>
               <span className="text-emerald-400 font-bold">{recoveryRate}%</span>
@@ -59,7 +70,7 @@ export default function GlobalStatusBar({ stats }) {
           {/* Fatality Ratio */}
           <div className="bg-slate-950/70 border border-rose-500/20 rounded-xl p-2.5 px-3 min-w-[120px]">
             <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
-              <span className="flex items-center gap-1 font-mono text-rose-400">
+              <span className="flex items-center gap-1 text-rose-400">
                 <ShieldAlert className="h-3 w-3" /> LETHALITY
               </span>
               <span className="text-rose-400 font-bold">{fatalityRate}%</span>
@@ -75,7 +86,7 @@ export default function GlobalStatusBar({ stats }) {
           {/* ICU Severity Ratio */}
           <div className="bg-slate-950/70 border border-amber-500/20 rounded-xl p-2.5 px-3 min-w-[120px]">
             <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
-              <span className="flex items-center gap-1 font-mono text-amber-400">
+              <span className="flex items-center gap-1 text-amber-400">
                 <Crosshair className="h-3 w-3" /> ICU INDEX
               </span>
               <span className="text-amber-400 font-bold">{criticalRate}%</span>

@@ -10,6 +10,7 @@ export default function MetricCard({
   icon: Icon,
   isActive,
   onClick,
+  loading = false,
 }) {
   const themes = {
     cases: {
@@ -48,12 +49,25 @@ export default function MetricCard({
     progressFill: 'bg-cyan-400',
   };
 
+  if (loading) {
+    return (
+      <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/40 animate-pulse space-y-3 font-mono">
+        <div className="flex justify-between items-center">
+          <div className="h-3 w-20 bg-slate-800 rounded"></div>
+          <div className="h-8 w-8 bg-slate-800 rounded-xl"></div>
+        </div>
+        <div className="h-8 w-32 bg-slate-800 rounded"></div>
+        <div className="h-3 w-24 bg-slate-800 rounded"></div>
+      </div>
+    );
+  }
+
   return (
     <div
       onClick={onClick}
       role="button"
       tabIndex={0}
-      className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 cursor-pointer text-left select-none backdrop-blur-xl group ${
+      className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 cursor-pointer text-left select-none backdrop-blur-xl group font-mono ${
         isActive
           ? `${themes.borderActive} ring-1 ring-cyan-400/40`
           : 'border-slate-800/80 bg-slate-900/50 hover:bg-slate-900/80 hover:border-slate-700'
@@ -62,10 +76,10 @@ export default function MetricCard({
       {/* Top Header Tag */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] text-slate-500 tracking-wider">
+          <span className="text-[10px] text-slate-500 tracking-wider">
             [{code}]
           </span>
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-300">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
             {title}
           </span>
         </div>
@@ -76,20 +90,20 @@ export default function MetricCard({
 
       {/* Main Metric Stat */}
       <div className="space-y-1 mb-4">
-        <h3 className={`text-3xl font-mono font-extrabold tracking-tight ${themes.statColor}`} title={formatFullNumber(total)}>
+        <h3 className={`text-3xl font-extrabold tracking-tight ${themes.statColor}`} title={formatFullNumber(total)}>
           {formatCompactNumber(total)}
         </h3>
-        <p className="text-[11px] font-mono text-slate-500">
-          {formatFullNumber(total)} recorded
+        <p className="text-[11px] text-slate-500">
+          {formatFullNumber(total)} in record
         </p>
       </div>
 
       {/* 24h Delta Pill & Mini Meter */}
       <div className="pt-3 border-t border-slate-800/60 flex items-center justify-between">
-        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+        <span className="text-[10px] text-slate-500 uppercase tracking-wider">
           24H INFLUX
         </span>
-        <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold border ${themes.tagColor}`}>
+        <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${themes.tagColor}`}>
           {formatStatChange(today)}
         </span>
       </div>
