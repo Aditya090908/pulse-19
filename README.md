@@ -1,140 +1,118 @@
-# 🛰️ PULSE 19 — Standalone Epidemiological Bio-Observatory (Zero-API)
+# PULSE 19
 
-[![React](https://img.shields.io/badge/React-18.3-06B6D4?logo=react&logoColor=black)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-6.2-646CFF?logo=vite)](https://vitejs.dev/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-00FFaa.svg)](LICENSE)
-[![Zero API](https://img.shields.io/badge/API-NONE%20(100%25%20Offline)-brightgreen)](#)
+<p align="center">
+  <strong>An interactive epidemiological dashboard for exploring a simulated public-health dataset.</strong>
+</p>
 
-A senior-engineered, zero-API epidemiological surveillance and public health telemetry dashboard. Built entirely using client-side React 18, Tailwind CSS, and local JSON datasets with a custom **Cyber-Obsidian & Electric Cyan** observatory interface.
+<p align="center">
+  <img src="https://img.shields.io/badge/React-18-149ECA?style=flat-square&logo=react&logoColor=white" alt="React 18" />
+  <img src="https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 6" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/License-MIT-16A34A?style=flat-square" alt="MIT License" />
+</p>
 
-> [!NOTE]
-> **Dataset Classification**: This project operates strictly on a **local simulated demonstration archive (Reference Date: October 2024)**. It makes **zero external API calls**, requires **no API keys**, and has **no backend dependency**.
+PULSE 19 is a browser-based dashboard concept for exploring epidemiological indicators through an interactive map, country-level details, historical charts, filters, and downloadable reports.
 
----
+> [!IMPORTANT]
+> **Data notice:** PULSE 19 uses a local simulated demonstration dataset with a reference date of October 2024. It does not fetch live COVID-19 or public-health data, and it is not intended for medical, policy, or operational decision-making.
 
-## 🌟 Enhanced Capabilities
+## What you can explore
 
-### 1. 🗺️ Local Interactive Vector World Map
-- Built with custom, self-contained SVG country boundaries (zero external map tiles or CDN requests).
-- **Infection Intensity Choropleth**: Color-coded across 4 dynamic severity thresholds (`<5M`, `5M-15M`, `15M-35M`, `>35M`).
-- **Interactive Tooltips**: Displays country flag, ISO codes, confirmed cases, recoveries, fatalities, and recovery rates on hover.
-- **Interactive Controls**: Zoom In (`+`), Zoom Out (`-`), and Reset (`↺`) view controls.
-- **Deep Inspection**: Clicking any territory launches the dedicated **Country Detail Dossier**.
+- **Interactive map** — select a territory and inspect its available dataset.
+- **Country detail view** — review calculated indicators and country-level values.
+- **Historical charts** — switch between available time windows and metrics.
+- **Search and sorting** — explore the territory table by country and indicator.
+- **CSV export** — download the displayed dataset.
+- **Print-friendly report** — use the browser's print dialog to save a report as PDF.
+- **Local alerts panel** — view demonstration bulletins bundled with the project.
+- **Theme options** — switch between the dashboard's dark and light themes.
 
-### 2. 🗂️ Country Detail Dossier Modal
-- Comprehensive telemetry card for any clicked nation.
-- Computes active ICU load, recovery %, mortality %, cases per 1M, and deaths per 1M using reusable mathematical utilities.
-- Interactive 7-day influx progression sparkline.
+All displayed figures are based on bundled demo data, not a live surveillance feed.
 
-### 3. 📈 Multi-Timeframe Epidemiological Trajectory Engine
-- **Timeframe Filtering**: One-click toggling between **7-Day**, **30-Day**, **90-Day**, and **All-Time** historical timelines.
-- **Metric Selectors**: Filter curves by **Confirmed Cases**, **Recoveries**, or **Fatalities**.
-- **Curve Comparisons**: Overlay recovery curves against infection curves simultaneously.
-- **Dual Display Modes**: Toggle between **Cumulative Total** and **Daily Influx Delta**.
-- **Crosshair Hover Scrubber**: Precision hover inspection with real-time timestamps and values.
+## Technology
 
-### 4. 📋 Territory Surveillance Matrix
-- Real-time instant search by country name or ISO2/ISO3 code.
-- Multi-column sorting: Total Cases, 24h Influx, Recoveries, Deaths, and Recovery Rate %.
-- Quick filter pills: `ALL`, `TOP 10`, `>95% REC`, and `>2% CFR`.
-- Inline visual recovery progress bars for every nation.
-- Clicking any row opens its detailed telemetry dossier.
+| Technology | Purpose |
+|---|---|
+| React 18 | User interface |
+| Vite 6 | Development server and build tooling |
+| Tailwind CSS | Styling |
+| JavaScript | Application logic |
+| Local JSON | Demonstration data |
+| SVG / chart and map utilities | Data visualization |
 
-### 5. ⚡ Advanced Operational Utilities
-- **⌨️ Ctrl + K Command Palette**: Universal spotlight search for rapid territory navigation, metric switching, and action execution.
-- **📥 Client-Side CSV Export**: Generates and downloads standard CSV surveillance datasets instantly with zero dependencies.
-- **🖨️ Client-Side PDF Report Generator**: Dedicated `@media print` formatted executive report view ready for browser print or Save as PDF.
-- **🔔 Epidemiological Bulletins Drawer**: Slide-over drawer displaying categorized health bulletins and alerts from local JSON.
-- **🌓 Theme Engine**: Switch between **Cyber Obsidian** (Dark Mode) and **Clinical Observatory** (Light Mode).
-- **⏳ Loading Skeletons & Empty States**: Polished shimmer skeletons during state changes and informative fallback states.
+## How the data works
 
----
+The application reads its demonstration data from local JSON files in `src/data/`. The project is designed to run without API credentials or a backend service.
 
-## 📁 Local Data Architecture (`src/data/`)
+The bundled data includes:
+- Global summary values
+- Country-level records
+- Historical time-series
+- Demonstration alerts and bulletins
 
-```
-src/data/
-├── global-stats.json       # Worldwide epidemiological telemetry & reference dates
-├── countries.json          # 20-nation local baseline dataset with flags & coords
-├── historical-stats.json   # 7D, 30D, 90D, and All-Time chronological time-series
-└── alerts.json             # Categorized surveillance dispatches & bulletins
-```
+Calculated indicators and table operations are handled by client-side utility functions.
 
-All calculations are centralized inside `src/utils/dataEngine.js`:
-- `calculateActiveCases(cases, recovered, deaths)`
-- `calculateRecoveryPercentage(recovered, cases)`
-- `calculateMortalityPercentage(deaths, cases)`
-- `calculateCasesPerMillion(cases, population)`
-- `calculateDeathsPerMillion(deaths, population)`
-- `sortCountries(countries, sortBy, sortDirection)`
-- `filterCountries(countries, options)`
-- `exportToCSV(countries, filename)`
-- `triggerPrintReport()`
+## Run locally
 
----
+### Requirements
 
-## 🛠️ Project Structure
+- Node.js (18 or newer recommended)
+- npm
 
-```
-D:\covid-tracker/
-├── src/
-│   ├── components/
-│   │   ├── Header.jsx              # Command center navigation, demo label, controls
-│   │   ├── GlobalStatusBar.jsx     # Global recovery, lethality & ICU ratio gauges
-│   │   ├── MetricCard.jsx          # Telemetry metric cards with loading skeletons
-│   │   ├── WorldMap.jsx            # Local SVG Choropleth Map with zoom/reset
-│   │   ├── TrendChart.jsx          # Multi-timeframe SVG trajectory engine
-│   │   ├── CountryTable.jsx        # Surveillance matrix with CSV export & filters
-│   │   ├── CountryDetailModal.jsx  # Detailed country telemetry dossier modal
-│   │   ├── CommandPalette.jsx      # Ctrl + K universal spotlight modal
-│   │   └── AlertsDrawer.jsx        # Dispatches & surveillance bulletins drawer
-│   ├── data/                       # Single source of truth local JSON datasets
-│   │   ├── global-stats.json
-│   │   ├── countries.json
-│   │   ├── historical-stats.json
-│   │   └── alerts.json
-│   ├── services/
-│   │   └── dataService.js          # Synchronous zero-API data provider
-│   ├── utils/
-│   │   ├── dataEngine.js           # Reusable mathematical & export utilities
-│   │   └── formatters.js           # Precision number and date formatters
-│   ├── App.jsx                     # Central observatory dashboard coordinator
-│   ├── index.css                   # Cyber-grid, print stylesheet & theme rules
-│   └── main.jsx                    # Application entry
-├── index.html                      # HTML shell & font preloads
-├── package.json                    # Project manifest
-├── tailwind.config.js              # Theme design tokens
-└── vite.config.js                  # Vite configuration
-```
+### Install dependencies
 
----
-
-## 🚀 Running the Application
-
-### Prerequisites
-- Node.js (v18+)
-
-### Development Server
 ```bash
+git clone https://github.com/Aditya090908/pulse-19.git
+cd pulse-19
 npm install
+```
+
+### Start the development server
+
+```bash
 npm run dev
 ```
-Open **`http://localhost:3000`** in your browser.
 
-### Production Build
+Open the local URL printed by Vite in your terminal.
+
+### Create a production build
+
 ```bash
 npm run build
 ```
 
----
+To preview the production build locally:
 
-## 👤 Author
+```bash
+npm run preview
+```
 
-- **Aditya** — [@Aditya090908](https://github.com/Aditya090908)
+## Project structure
 
----
+```text
+src/
+├── components/   # Dashboard interface components
+├── data/         # Local demonstration datasets
+├── services/     # Data access helpers
+└── utils/        # Calculations and formatting
+```
 
-## 📄 License
+## Project status
 
-Open-source and licensed under the [MIT License](LICENSE).
+PULSE 19 is a demonstration project and remains a work in progress. The current repository documents the existing dashboard concept and local-data workflow. Further work should focus on validating calculations, improving accessibility and responsive behavior, adding project screenshots, and testing the production build.
+
+## Possible next steps
+
+- [ ] Add current screenshots of the running dashboard
+- [ ] Verify all dashboard interactions and calculations
+- [ ] Add automated tests for data utilities
+- [ ] Improve accessibility and mobile layouts
+- [ ] Add a hosted demo if a reliable deployment is available
+
+## Author
+
+**Aditya Kumar** · [@Aditya090908](https://github.com/Aditya090908)
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
