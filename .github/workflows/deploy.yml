@@ -38,8 +38,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Pulse 19
+           - name: Build Pulse 19
         run: npm run build
+        env:
+          VITE_API_BASE_URL: https://pulse-19.onrender.com
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
