@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#090B0F" />
+    <meta
+      name="description"
+      content="PULSE-19 is a global public-health intelligence dashboard for exploring outbreaks, country risk and disease trends. All figures are simulated demonstration data."
+    />
+    <title>PULSE-19 — Global Health Intelligence (simulated data)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Apply the saved theme before first paint to avoid a flash.
+      (function () {
+        try {
+          var saved = JSON.parse(localStorage.getItem('pulse19.theme'));
+          if (saved === 'light') {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f4f2ed');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="min-h-screen bg-canvas font-sans text-ink antialiased selection:bg-accent/30">
+    <div id="root"></div>
+    <noscript>PULSE-19 needs JavaScript to run.</noscript>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

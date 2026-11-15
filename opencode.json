@@ -1,0 +1,20 @@
+
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "unified": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Unified API",
+      "options": {
+        "baseURL": "http://127.0.0.1:31415/v1",
+        "apiKey": "{env:UNIFIED_API_KEY}"
+      },
+      "models": {
+        "qwen3-coder-480b-a35b-instruct": {
+          "name": "Qwen3 Coder 480B"
+        }
+      }
+    }
+  },
+  "model": "unified/qwen3-coder-480b-a35b-instruct"
+}
